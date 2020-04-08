@@ -1,8 +1,7 @@
 
 
 
-
-token = 'Njk2MDkzOTQzNTQ4NjA4NTEz.XojxYw.7W6tBLTnyAOAWEbCTRfNFB12EUg' 
+from config import token
 
 import discord
 import numpy as np
