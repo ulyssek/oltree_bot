@@ -64,6 +64,160 @@ def sort_cards(client):
     for player in client.stored_values["cards"]:
         client.stored_values["cards"][player].sort()
 
+
+async def cmd_hello(message):
+    """Un p'tit coucou"""
+    await message.channel.send("Fais pas le malin mon p'tit gars")
+
+async def cmd_bagarre(message):
+    """Faire un jet de dé (maitrise, prouesse, exhaltation)"""
+    rolls = roll_n_dices(3,dice_value,False)
+    stored_dices = client.stored_values["dices"] = rolls
+    ace = client.stored_values["ace"] = (rolls == dice_value)
+    await message.channel.send(" ".join(map(lambda x : str(int(x)),rolls)))
+    await message.channel.send("Total : " + str(get_sum(stored_dices)))
+        for i in range(sum(ace)):
+            with open('images/boum.jpg', 'rb') as fp:
+                f = discord.File(fp)
+                await message.channel.send(file=f)
+
+async def cmd_explode(message):
+    """Relance les dés qui ont explosé au précédent jet du joueur"""
+    if "ace" in client.stored_values.keys():
+        ace = client.stored_values["ace"]
+    else:
+        ace = [0]
+   if sum(ace) == 0:
+       await message.channel.send("Fais pas le malin mon p'tit gars")
+       return
+
+   stored_dices = client.stored_values["dices"]
+   exploding_dices = roll_n_dices(sum(ace),dice_value,False)
+   stored_dices[ace] += exploding_dices
+   ace[ace] &= (exploding_dices == dice_value)
+   await message.channel.send(" ".join(map(lambda x : str(int(x)),exploding_dices)) + " (New roll)")
+   await message.channel.send(" ".join(map(lambda x : str(int(x)),stored_dices)) + " (Total)")
+   if sum(ace) == 0:
+       await message.channel.send("Total : " + str(get_sum(stored_dices)))
+       for i in range(sum(ace)):
+           with open('images/boum.jpg', 'rb') as fp:
+               f = discord.File(fp)
+               await message.channel.send(file=f)
+
+async def cmd_test(message):
+    """Une commande de test"""
+    await message.channel.send(message.author)
+    await message.channel.send(player_discord_names[str(message.author).split('#')[0]])
+
+async def cmd_change_dices(message):
+    """$value: Change le type des dés"""
+    try:
+        dice_value = int(str(content).split(" ")[1])
+        client.stored_values["dice_value"] = dice_value
+        await message.channel.send("C'est toi le boss")
+    except:
+        await message.channel.send("Ya un truc qui va pas, format ';change_dice_value 8'")
+
+async def draw_card(message, number, offset):
+    boule = True
+    player = get_player_name(message)
+
+    while boule:
+        new_card = random.randint(offset, offset + number)
+        boule = new_card in all_cards(client.stored_values["cards"])
+    await message.channel.send("Carte tirée : " + str(new_card))
+    client.stored_values["cards"][player].append(new_card)
+    store_cards(client)
+    await send_card(message.channel,new_card)
+    sort_cards(client)
+
+async def cmd_exal(message):
+    """$value: Tire $value cartes d'exhaltation"""
+    await draw_card(message, 1, 53)
+
+async def cmd_pers(message):
+    """$value: Tire $value cartes de persécution"""
+    await draw_card(message, 55, 18)
+
+async def cmd_patr(message):
+    """$value: Tire $value cartes de patrouille"""
+    await draw_card(message, 73, 36)
+
+async def cmd_drop_card(message):
+    """$value: jette la carte $value"""
+    player = get_player_name(message)
+    try:
+        card_number = int(str(content).split(" ")[1])
+    except:
+        await message.channel.send("Me faut un numéro de la carte mon goret")
+        return
+    cards = client.stored_values["cards"][player]
+    card_index = cards.index(card_number)
+    try:
+        cards.pop(card_index)
+        await message.channel.send("Voilà voilà")
+    except ValueError:
+        await message.channel.send("T'as pas la carte mon chou")
+        return
+    store_cards(client)
+
+async def cmd_play(message):
+    """$value: Joue la carte $value"""
+    player = get_player_name(message)
+    try:
+        card_number = int(str(content).split(" ")[1])
+    except:
+        await message.channel.send("Me faut un numéro de la carte mon goret")
+        return
+    cards = client.stored_values["cards"][player]
+    try:
+        card_index = cards.index(card_number)
+        cards.pop(card_index)
+    except ValueError:
+        await message.channel.send("T'as pas la carte mon chou")
+        return
+    await send_card(channel,card_number)
+    store_cards(client)
+
+async def cmd_cards(message):
+    """Montre la liste des cartes des joueurs"""
+    for key in client.stored_values["cards"].keys():
+        await message.channel.send(key + " " + str(client.stored_values["cards"][key]))
+
+async def cmd_get_card(message):
+    """$value: Tire la carte $value"""
+    try:
+        card_number = int(str(content).split(" ")[1])
+    except:
+        await message.channel.send("Me faut un numéro de la carte mon goret")
+        return
+    await send_card(channel,card_number)
+
+async def cmd_my_cards(message):
+    """Affiche toutes les cartes du joueur (ça peut faire beaucoup)"""
+    if " " in content:
+        player = content.split(" ")[1]
+    else:
+        player = get_player_name(message)
+    for card_number in client.stored_values["cards"][player]:
+        await send_card(channel,card_number)
+
+commands = {
+    ';hello': cmd_hello,
+    ';bagarre': cmd_bagarre,
+    ';explode': cmd_explode,
+    ';test': cmd_test,
+    ';change_dices': cmd_change_dices,
+    ';exal': cmd_exal,
+    ';pers': cmd_pers,
+    ';patr': cmd_patr,
+    ';drop_card': cmd_drop_card,
+    ';play': cmd_play,
+    ';cards': cmd_cards,
+    ';get_card': cmd_get_card,
+    ';my_cards': cmd_my_cards,
+}
+
 client = discord.Client()
 
 
@@ -91,163 +245,11 @@ async def on_message(message):
 
     print(get_player_name(message) + ' - ' + str(content))
 
-    if start('$hello'):
-        await message.channel.send("Fais pas le malin mon p'tit gars")
+    if start(';help'):
+        for cmd, func in commands:
+            await channel.send(cmd + ' ' + func.__doc__)
+    else:
+        return await commands[message.content](message)
 
-
-    elif start(';help'):
-        await channel.send(';bagarre')
-        await channel.send(';explode')
-        await channel.send(';change_dices $value')
-        await channel.send(';exal')
-        await channel.send(';pers')
-        await channel.send(';patr')
-        await channel.send(';drop_card $value')
-        await channel.send(';cards')
-        await channel.send(';my_cards')
-        await channel.send(';get_card $value')
-        await channel.send(';play $value')
-
-
-    elif start(';bagarre'):
-        rolls = roll_n_dices(3,dice_value,False)
-        stored_dices = client.stored_values["dices"] = rolls
-        ace = client.stored_values["ace"] = (rolls == dice_value)
-        await message.channel.send(" ".join(map(lambda x : str(int(x)),rolls)))
-        await message.channel.send("Total : " + str(get_sum(stored_dices)))
-        for i in range(sum(ace)):
-            with open('images/boum.jpg', 'rb') as fp:
-                f = discord.File(fp)
-                await message.channel.send(file=f)
-
-    elif start(';explode'):
-        if "ace" in client.stored_values.keys():
-            ace = client.stored_values["ace"]
-        else:
-            ace = [0]
-        if sum(ace) == 0:
-            await message.channel.send("Fais pas le malin mon p'tit gars")
-            return
-        
-        stored_dices = client.stored_values["dices"]
-        exploding_dices = roll_n_dices(sum(ace),dice_value,False)
-        stored_dices[ace] += exploding_dices
-        ace[ace] &= (exploding_dices == dice_value)
-        await message.channel.send(" ".join(map(lambda x : str(int(x)),exploding_dices)) + " (New roll)")
-        await message.channel.send(" ".join(map(lambda x : str(int(x)),stored_dices)) + " (Total)") 
-        if sum(ace) == 0:
-            await message.channel.send("Total : " + str(get_sum(stored_dices)))
-        for i in range(sum(ace)):
-            with open('images/boum.jpg', 'rb') as fp:
-                f = discord.File(fp)
-                await message.channel.send(file=f)
-
-
-    elif start(';test'):
-        
-        await message.channel.send(message.author)
-        await message.channel.send(player_discord_names[str(message.author).split('#')[0]])
-
-    elif start(';change_dices'):
-        try:
-            dice_value = int(str(content).split(" ")[1])
-            client.stored_values["dice_value"] = dice_value
-            await message.channel.send("C'est toi le boss")
-        except:
-            await message.channel.send("Ya un truc qui va pas, format ';change_dice_value 8'")
-
-    elif start(';exal'):
-        boule = True
-        player = get_player_name(message)
-        
-        while boule:
-            new_card = random.randint(1,54)
-            boule = new_card in all_cards(client.stored_values["cards"])
-        await message.channel.send("Carte tirée : " + str(new_card))
-        client.stored_values["cards"][player].append(new_card)
-        store_cards(client)
-        await send_card(message.channel,new_card)
-        sort_cards(client)
-
-
-    elif start(';pers'):
-        boule = True
-        player = get_player_name(message)
-        
-        while boule:
-            new_card = random.randint(1,18)+54
-            boule = new_card in all_cards(client.stored_values["cards"])
-        await message.channel.send("Carte tirée : " + str(new_card))
-        client.stored_values["cards"][player].append(new_card)
-        store_cards(client)
-        await send_card(message.channel,new_card)
-        sort_cards(client)
-
-    elif start(';patr'):
-        boule = True
-        player = get_player_name(message)
-        
-        while boule:
-            new_card = random.randint(1,36)+72
-            boule = new_card in all_cards(client.stored_values["cards"])
-        await message.channel.send("Carte tirée : " + str(new_card))
-        client.stored_values["cards"][player].append(new_card)
-        store_cards(client)
-        await send_card(message.channel,new_card)
-        sort_cards(client)
-
-    elif start(';drop_card'):
-        player = get_player_name(message)
-        try:
-            card_number = int(str(content).split(" ")[1])
-        except:
-            await message.channel.send("Me faut un numéro de la carte mon goret")
-            return
-        cards = client.stored_values["cards"][player]
-        card_index = cards.index(card_number)
-        try:
-            cards.pop(card_index)
-            await message.channel.send("Voilà voilà")
-        except ValueError:
-            await message.channel.send("T'as pas la carte mon chou")
-            return
-        store_cards(client)
-        
-    elif start(';play'):
-        player = get_player_name(message)
-        try:
-            card_number = int(str(content).split(" ")[1])
-        except:
-            await message.channel.send("Me faut un numéro de la carte mon goret")
-            return
-        cards = client.stored_values["cards"][player]
-        try:
-            card_index = cards.index(card_number)
-            cards.pop(card_index)
-        except ValueError:
-            await message.channel.send("T'as pas la carte mon chou")
-            return
-        await send_card(channel,card_number)
-        store_cards(client)
-
-    elif start(';cards'):
-        for key in client.stored_values["cards"].keys():
-            await message.channel.send(key + " " + str(client.stored_values["cards"][key]))
-
-    elif start(';get_card'):
-        try:
-            card_number = int(str(content).split(" ")[1])
-        except:
-            await message.channel.send("Me faut un numéro de la carte mon goret")
-            return
-        await send_card(channel,card_number)
-
-    elif start(';my_cards'):
-        if " " in content:
-            player = content.split(" ")[1]
-        else:
-            player = get_player_name(message)
-        for card_number in client.stored_values["cards"][player]:
-            await send_card(channel,card_number)
 
 client.run(token)
