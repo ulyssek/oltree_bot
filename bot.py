@@ -253,7 +253,7 @@ async def cmd_my_cards(message):
         await send_card(channel,card_number)
 
 async def cmd_take(message):
-    """$value $player: Prend $value à $player"""
+    """$value $player: Prend $value"""
     content = message.content
     player = get_player_name(message)
     try:
@@ -357,8 +357,6 @@ async def on_message(message):
     command = content.split()[0]
     channel = message.channel
     player =get_player_name(message)
-    if message.author == client.user:
-        return
 
     print(get_player_name(message) + ' - ' + str(content))
     
