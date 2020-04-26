@@ -115,6 +115,13 @@ def format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg):
             exalt + bonus_dmg)
     return msg
 
+async def cmd_skills(message):
+    """Affiche les statistiques"""
+    player = get_player_name(message)
+    msg = "Compétences de %s\n" % player
+    msg += "\n".join(["%s: %s" % (key,val) for (key,val) in client.stored_values["players"][player].items()])
+    await message.channel.send(msg)
+
 async def cmd_explode(message):
     """Relance les dés qui ont explosé au précédent jet du joueur"""
     player = get_player_name(message)
@@ -302,7 +309,8 @@ commands = {
     ';get_card': cmd_get_card,
     ';my_cards': cmd_my_cards,
     ';give': cmd_give,
-    ';take': cmd_take
+    ';take': cmd_take,
+    ';skills': cmd_skills
 }
 
 client = discord.Client()
