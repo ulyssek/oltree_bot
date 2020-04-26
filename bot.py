@@ -67,7 +67,9 @@ async def cmd_bagarre(message):
     client.stored_values["jets"][player] = jet
     client.stored_values["dices"][player] = rolls
     ace = client.stored_values["ace"][player] = (rolls == dice_value)
-    msg_bagarre = format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg)
+    weapon = client.stored_values["players"][player]["weapon"]
+    weapon_bonus = client.stored_values["players"][player]["weapon_bonus"]
+    msg_bagarre = format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon, weapon_bonus)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -97,14 +99,16 @@ def get_bonus(jet, player):
                 bonus_dmg = client.stored_values["players"][player][jet]
     return bonus_touch, bonus_dmg
 
-def format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg):
-    player = get_player_name(message)
+def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weapon_bonus = 0):
     rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
     mait, prou, exalt = map(lambda x: int(x), rolls)
     if jet:
         msg = "Jet de %s de %s\n" % (jet, player)
     else:
         msg = "Jet standard de %s\n" % player
+    if weapon:
+        msg += "Arme (les dégâts à appliquer manuellement): %s\n" % weapons_dict[weapon]
+        msg += "Bonus arme: + %d dégâts\n" % int(weapon_bonus)
     msg += "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
     msg += "%d (%d dégâts) ou %d (%d dégâts) ou %d (%d dégâts)" % (
             mait + prou + bonus_touch,
@@ -140,10 +144,9 @@ async def cmd_explode(message):
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
-
-    #await message.channel.send(" ".join(map(lambda x : str(int(x)),exploding_dices)) + " (New roll)")
-    #await message.channel.send(" ".join(map(lambda x : str(int(x)),stored_dices)) + " (Total)") 
-    msg_bagarre = format_bagarre(message, jet, stored_dices, bonus_touch, bonus_dmg)
+    weapon = client.stored_values["players"][player]["weapon"]
+    weapon_bonus = client.stored_values["players"][player]["weapon_bonus"]
+    msg_bagarre = format_bagarre(player, jet, stored_dices, bonus_touch, bonus_dmg, weapon, weapon_bonus)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -312,6 +315,17 @@ commands = {
     ';take': cmd_take,
     ';skills': cmd_skills
 }
+
+weapons_dict = {
+        "1h_sword": "Epée",
+        "2h_sword": "Epée à deux mains (+2 dégâts)",
+        "1h_axe": "Hache (-1 CA contre combattants armés, +2 dégâts contre monstres",
+        "2h_axe": "Hache à deux mains (-1 CA contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
+        "longbow": "Arc long",
+        "shortbow": "Arc court",
+        "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
+        "dagger": "Dague (-2 CA contre adversaires avec arme plus longue, pas de malus en milieu confiné)",
+        }
 
 client = discord.Client()
 
