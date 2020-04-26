@@ -1,4 +1,5 @@
 from config import token
+from config import players
 
 import discord
 import numpy as np
@@ -225,6 +226,49 @@ async def cmd_my_cards(message):
     for card_number in client.stored_values["cards"][player]:
         await send_card(channel,card_number)
 
+async def cmd_take(message):
+    content = message.content
+    player = get_player_name(message)
+    try:
+        card_number = int(str(content).split(" ")[1])
+    except:
+        await message.channel.send("Me faut un numéro de la carte mon goret")
+        return
+    if card_number in all_cards(client.stored_values["cards"]):
+        await message.channel.send("Quelqu'un a déjà la carte mon salaud")
+        return
+    client.stored_values["cards"][player].append(card_number)
+    store_cards(client)
+    await send_card(channel,card_number)
+
+async def cmd_give(message):
+    content = message.content
+    player = get_player_name(message)
+
+    try:
+        card_number = int(str(content).split(" ")[1])
+    except:
+        await message.channel.send("Me faut un numéro de la carte mon goret")
+        return
+    try:
+        receiver = str(content).split(" ")[2]
+    except:
+        await message.channel.send("Me faut le nom du joueur mon p'tit lou")
+        return
+    if receiver not in client.stored_values["cards"].keys():
+        await message.channel.send("Jamais entendu parlé de ce gars là")
+        return
+    cards = client.stored_values["cards"][player]
+    try:
+        card_index = cards.index(card_number)
+        cards.pop(card_index)
+        await message.channel.send("Voilà voilà")
+    except ValueError:
+        await message.channel.send("T'as pas la carte mon chou")
+        return
+    client.stored_values["cards"][receiver].append(card_number)
+    store_cards(client)
+
 commands = {
     ';hello': cmd_hello,
     ';bagarre': cmd_bagarre,
@@ -239,6 +283,8 @@ commands = {
     ';cards': cmd_cards,
     ';get_card': cmd_get_card,
     ';my_cards': cmd_my_cards,
+    ';give': cmd_give,
+    ';take': cmd_take
 }
 
 client = discord.Client()
@@ -246,6 +292,8 @@ client = discord.Client()
 client.stored_values = {
         "count" : 0,
         "dice_value" : 8,
+        "ace":{},
+        "dices":{},
         }
 
 with open(file_name) as json_file:
@@ -266,6 +314,7 @@ async def on_message(message):
     content = message.content
     command = content.split()[0]
     channel = message.channel
+    player =get_player_name(message)
     if message.author == client.user:
         return
 
