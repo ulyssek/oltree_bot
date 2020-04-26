@@ -59,12 +59,14 @@ async def cmd_hello(message):
     await message.channel.send("Fais pas le malin mon p'tit gars")
 
 async def cmd_bagarre(message):
-    """Faire un jet de dé (maitrise, prouesse, exaltation)"""
+    """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
     dice_value = client.stored_values["dice_value"]
     bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
     rolls = roll_n_dices(3,dice_value,False)
-    stored_dices = client.stored_values["dices"] = rolls
-    ace = client.stored_values["ace"] = (rolls == dice_value)
+    player = get_player_name(message)
+    client.stored_values["jets"][player] = jet
+    client.stored_values["dices"][player] = rolls
+    ace = client.stored_values["ace"][player] = (rolls == dice_value)
     msg_bagarre = format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
@@ -74,27 +76,36 @@ async def cmd_bagarre(message):
 
 def parse_bagarre(message):
     values = message.content.split()
-    classes =  ["soldat", "voyageur", "érudit", "archer", "assassin", "berzekr", "guerrier"]
     player = get_player_name(message)
-    bonus_touch, bonus_dmg, jet = 0, 0, None
+    jet = None
     if len(values) > 1:
         jet = values[1]
-        if jet in classes:
-            if jet in ["soldat", "voyageur", "érudit"]:
-                bonus_touch = client.stored_values["players"][player][jet]
-            else:
-                bonus_touch = client.stored_values["players"][player]["soldat"]
-                if jet == "berzekr":
-                    bonus_touch += client.stored_values["players"][player]["berzekr"]
-                    bonus_dmg = client.stored_values["players"][player]["berzekr"]
-                elif jet in ["guerrier", "archer"]:
-                    bonus_dmg = client.stored_values["players"][player][jet]
-    return bonus_touch, bonus_dmg, jet
+    return get_bonus(jet, player) + (jet,)
+
+def get_bonus(jet, player):
+    bonus_touch = 0
+    bonus_dmg = 0
+    if jet in classes:
+        if jet in ["soldat", "voyageur", "érudit"]:
+            bonus_touch = client.stored_values["players"][player][jet]
+        else:
+            bonus_touch = client.stored_values["players"][player]["soldat"]
+            if jet == "berzekr":
+                bonus_touch += client.stored_values["players"][player]["berzekr"]
+                bonus_dmg = client.stored_values["players"][player]["berzekr"]
+            elif jet in ["guerrier", "archer"]:
+                bonus_dmg = client.stored_values["players"][player][jet]
+    return bonus_touch, bonus_dmg
 
 def format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg):
+    player = get_player_name(message)
     rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
     mait, prou, exalt = map(lambda x: int(x), rolls)
-    msg = "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
+    if jet:
+        msg = "Jet de %s de %s\n" % (jet, player)
+    else:
+        msg = "Jet standard de %s\n" % player
+    msg += "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
     msg += "%d (%d dégâts) ou %d (%d dégâts) ou %d (%d dégâts)" % (
             mait + prou + bonus_touch,
             mait + bonus_dmg,
@@ -106,27 +117,31 @@ def format_bagarre(message, jet, rolls, bonus_touch, bonus_dmg):
 
 async def cmd_explode(message):
     """Relance les dés qui ont explosé au précédent jet du joueur"""
+    player = get_player_name(message)
     dice_value = client.stored_values["dice_value"]
-    if "ace" in client.stored_values.keys():
-        ace = client.stored_values["ace"]
+    jet = None
+    if player in client.stored_values["ace"].keys():
+        jet = client.stored_values["jets"][player]
+        ace = client.stored_values["ace"][player]
     else:
         ace = [0]
     if sum(ace) == 0:
         await message.channel.send("Fais pas le malin mon p'tit gars")
         return
-
-    stored_dices = client.stored_values["dices"]
+    bonus_touch, bonus_dmg = get_bonus(jet, player)
+    stored_dices = client.stored_values["dices"][player]
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
-    await message.channel.send(" ".join(map(lambda x : str(int(x)),exploding_dices)) + " (New roll)")
-    await message.channel.send(" ".join(map(lambda x : str(int(x)),stored_dices)) + " (Total)")
-    if sum(ace) == 0:
-        await message.channel.send("Total : " + str(get_sum(stored_dices)))
-        for i in range(sum(ace)):
-            with open('images/boum.jpg', 'rb') as fp:
-                f = discord.File(fp)
-                await message.channel.send(file=f)
+
+    #await message.channel.send(" ".join(map(lambda x : str(int(x)),exploding_dices)) + " (New roll)")
+    #await message.channel.send(" ".join(map(lambda x : str(int(x)),stored_dices)) + " (Total)") 
+    msg_bagarre = format_bagarre(message, jet, stored_dices, bonus_touch, bonus_dmg)
+    await message.channel.send(msg_bagarre)
+    for i in range(sum(ace)):
+        with open('images/boum.jpg', 'rb') as fp:
+            f = discord.File(fp)
+            await message.channel.send(file=f)
 
 async def cmd_test(message):
     """Une commande de test"""
@@ -135,6 +150,7 @@ async def cmd_test(message):
 
 async def cmd_change_dices(message):
     """$value: Change le type des dés"""
+    content = message.content
     try:
         dice_value = int(str(content).split(" ")[1])
         client.stored_values["dice_value"] = dice_value
@@ -227,6 +243,7 @@ async def cmd_my_cards(message):
         await send_card(channel,card_number)
 
 async def cmd_take(message):
+    """$value $player: Prend $value à $player"""
     content = message.content
     player = get_player_name(message)
     try:
@@ -242,6 +259,7 @@ async def cmd_take(message):
     await send_card(channel,card_number)
 
 async def cmd_give(message):
+    """$value $player: Donne $value à $player"""
     content = message.content
     player = get_player_name(message)
 
@@ -289,11 +307,13 @@ commands = {
 
 client = discord.Client()
 
+classes =  ["soldat", "voyageur", "érudit", "archer", "assassin", "berzekr", "guerrier"]
 client.stored_values = {
         "count" : 0,
         "dice_value" : 8,
         "ace":{},
         "dices":{},
+        "jets":{},
         }
 
 with open(file_name) as json_file:
