@@ -144,17 +144,26 @@ async def cmd_change_dices(message):
 async def draw_card(message, number, offset):
     boule = True
     player = get_player_name(message)
-
-    while boule:
-        new_card = random.randint(number, offset + number)
-        print(offset,number,new_card)
-        boule = new_card in all_cards(client.stored_values["cards"])
-    await message.channel.send("Carte tirée : " + str(new_card))
-    if not 73 <= new_card <= 97:
-        client.stored_values["cards"][player].append(new_card)
-        store_cards(client)
-    await send_card(message.channel,new_card)
-    sort_cards(client)
+    try:
+        card_number = int(str(message.content).split(" ")[1])
+    except:
+        card_number = 1
+    if card_number > 6:
+        await message.channel.send("Ca fait beaucoup de cartes non?")
+        return
+    
+    for i in range(card_number):
+        boule = True
+        while boule:
+            new_card = random.randint(number, offset + number)
+            print(offset,number,new_card)
+            boule = new_card in all_cards(client.stored_values["cards"])
+        await message.channel.send("Carte tirée : " + str(new_card))
+        if not 73 <= new_card <= 97:
+            client.stored_values["cards"][player].append(new_card)
+            store_cards(client)
+        await send_card(message.channel,new_card)
+        sort_cards(client)
 
 async def cmd_exal(message):
     """$value: Tire $value cartes d'exhaltation"""
@@ -208,8 +217,11 @@ async def cmd_play(message):
 
 async def cmd_cards(message):
     """Montre la liste des cartes des joueurs"""
+    msg = ""
     for key in client.stored_values["cards"].keys():
-        await message.channel.send(key + " " + str(client.stored_values["cards"][key]))
+        msg += key + " " + str(client.stored_values["cards"][key])+"\n"
+
+    await message.channel.send(msg)
 
 async def cmd_get_card(message):
     """$value: Tire la carte $value"""
@@ -230,7 +242,7 @@ async def cmd_my_cards(message):
         await send_card(message.channel,card_number)
 
 async def cmd_take(message):
-    """$value $player: Prend $value"""
+    """$value : Prend $value"""
     content = message.content
     player = get_player_name(message)
     try:
