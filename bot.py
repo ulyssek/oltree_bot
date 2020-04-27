@@ -260,6 +260,16 @@ async def cmd_give(message):
     client.stored_values["cards"][receiver].append(card_number)
     store_cards(client)
 
+async def cmd_drop_hand(message):
+    """Drop la main du joueur"""
+    player = get_player_name(message)
+
+    client.stored_values["cards"][player] = []
+
+    await message.channel.send("Voilà Voilà")
+
+
+
 commands = {
     ';hello': cmd_hello,
     ';bagarre': cmd_bagarre,
@@ -276,7 +286,8 @@ commands = {
     ';my_cards': cmd_my_cards,
     ';give': cmd_give,
     ';take': cmd_take,
-    ';skills': cmd_skills
+    ';skills': cmd_skills,
+    ';drop_hand' : cmd_drop_hand,
 }
 
 weapons_dict = {
