@@ -3,3 +3,4 @@ players.json
 config.py
 __pycache__
 *.swp
+.DS_store

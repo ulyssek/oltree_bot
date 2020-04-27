@@ -131,11 +131,13 @@ async def draw_card(message, number, offset):
     player = get_player_name(message)
 
     while boule:
-        new_card = random.randint(offset, offset + number)
+        new_card = random.randint(number, offset + number)
+        print(offset,number,new_card)
         boule = new_card in all_cards(client.stored_values["cards"])
     await message.channel.send("Carte tirée : " + str(new_card))
-    client.stored_values["cards"][player].append(new_card)
-    store_cards(client)
+    if not 73 <= new_card <= 97:
+        client.stored_values["cards"][player].append(new_card)
+        store_cards(client)
     await send_card(message.channel,new_card)
     sort_cards(client)
 
@@ -145,17 +147,19 @@ async def cmd_exal(message):
 
 async def cmd_pers(message):
     """$value: Tire $value cartes de persécution"""
+    print("pers")
     await draw_card(message, 55, 18)
 
 async def cmd_patr(message):
     """$value: Tire $value cartes de patrouille"""
+    print("patr")
     await draw_card(message, 73, 36)
 
 async def cmd_drop_card(message):
     """$value: jette la carte $value"""
     player = get_player_name(message)
     try:
-        card_number = int(str(content).split(" ")[1])
+        card_number = int(str(message.content).split(" ")[1])
     except:
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
@@ -173,7 +177,7 @@ async def cmd_play(message):
     """$value: Joue la carte $value"""
     player = get_player_name(message)
     try:
-        card_number = int(str(content).split(" ")[1])
+        card_number = int(str(message.content).split(" ")[1])
     except:
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
@@ -184,7 +188,7 @@ async def cmd_play(message):
     except ValueError:
         await message.channel.send("T'as pas la carte mon chou")
         return
-    await send_card(channel,card_number)
+    await send_card(message.channel,card_number)
     store_cards(client)
 
 async def cmd_cards(message):
@@ -195,20 +199,20 @@ async def cmd_cards(message):
 async def cmd_get_card(message):
     """$value: Tire la carte $value"""
     try:
-        card_number = int(str(content).split(" ")[1])
+        card_number = int(str(message.content).split(" ")[1])
     except:
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
-    await send_card(channel,card_number)
+    await send_card(message.channel,card_number)
 
 async def cmd_my_cards(message):
     """Affiche toutes les cartes du joueur (ça peut faire beaucoup)"""
-    if " " in content:
-        player = content.split(" ")[1]
+    if " " in message.content:
+        player = message.content.split(" ")[1]
     else:
         player = get_player_name(message)
     for card_number in client.stored_values["cards"][player]:
-        await send_card(channel,card_number)
+        await send_card(message.channel,card_number)
 
 async def cmd_take(message):
     """$value $player: Prend $value"""
@@ -224,7 +228,7 @@ async def cmd_take(message):
         return
     client.stored_values["cards"][player].append(card_number)
     store_cards(client)
-    await send_card(channel,card_number)
+    await send_card(message.channel,card_number)
 
 async def cmd_give(message):
     """$value $player: Donne $value à $player"""
@@ -312,14 +316,13 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-    content = message.content
-    command = content.split()[0]
+    command = message.content.split()[0]
     channel = message.channel
     player =get_player_name(message)
 
-    print(get_player_name(message) + ' - ' + str(content))
+    print(get_player_name(message) + ' - ' + str(message.content))
     
-    if command not in commands.keys() and command != ";help":
+    if command[0] == ';' and command not in commands.keys() and command != ";help":
         await message.channel.send("Ca marcherait mieux si tu regardais ton clavier en tapant")
         return
 

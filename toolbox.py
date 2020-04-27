@@ -1,9 +1,12 @@
 import numpy as np
 import random
 import json
+import discord
 
 
 
+file_name = "cards.json"
+players_json = "players.json"
 
 
 def get_randint(bound):
