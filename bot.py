@@ -156,7 +156,6 @@ async def draw_card(message, number, offset):
         boule = True
         while boule:
             new_card = random.randint(number, offset + number)
-            print(offset,number,new_card)
             boule = new_card in all_cards(client.stored_values["cards"])
         await message.channel.send("Carte tirée : " + str(new_card))
         if not 73 <= new_card <= 97:
@@ -171,12 +170,10 @@ async def cmd_exal(message):
 
 async def cmd_pers(message):
     """$value: Tire $value cartes de persécution"""
-    print("pers")
     await draw_card(message, 55, 18)
 
 async def cmd_patr(message):
     """$value: Tire $value cartes de patrouille"""
-    print("patr")
     await draw_card(message, 73, 36)
 
 async def cmd_drop_card(message):
