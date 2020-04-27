@@ -6,6 +6,7 @@ import discord
 import numpy as np
 import random
 import json
+from time import sleep
 
 
 
@@ -316,21 +317,26 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-    command = message.content.split()[0]
-    channel = message.channel
-    player =get_player_name(message)
+    try:
+        command = message.content.split()[0]
+        channel = message.channel
+        player =get_player_name(message)
 
-    print(get_player_name(message) + ' - ' + str(message.content))
-    
-    if command[0] == ';' and command not in commands.keys() and command != ";help":
-        await message.channel.send("Ca marcherait mieux si tu regardais ton clavier en tapant")
-        return
+        print(get_player_name(message) + ' - ' + str(message.content))
+        
+        if command[0] == ';' and command not in commands.keys() and command != ";help":
+            await message.channel.send("Ca marcherait mieux si tu regardais ton clavier en tapant")
+            return
 
-    if command == ";help":
-        help_msg = "\n".join([cmd + " " + func.__doc__ for cmd,func in commands.items()])
-        await channel.send(help_msg)
-    else:
-        return await commands[command](message)
+        if command == ";help":
+            help_msg = "\n".join([cmd + " " + func.__doc__ for cmd,func in commands.items()])
+            await channel.send(help_msg)
+        else:
+            return await commands[command](message)
+    except:
+        await message.channel.send("Il s'est passé un truc qui devait pas se passer comme on avait dit que ça devait se passer")
+        sleep(1.5)
+        await message.channel.send("Enfin je crois")
 
 
 client.run(token)
