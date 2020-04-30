@@ -1,0 +1,47 @@
+{
+    "ruuand" : {
+        "soldat": 4,
+        "voyageur": 3,
+        "érudit": 4,
+        "archer": 3,
+        "assassin": 3,
+        "berzekr": 2,
+        "guerrier": 2,
+        "weapon": "2h_sword",
+        "weapon_bonus": 1
+    },
+    "elias": {
+        "soldat": 4,
+        "voyageur": 1,
+        "érudit": 0,
+        "archer": 0,
+        "assassin": 0,
+        "berzekr": 1,
+        "guerrier": 0,
+        "weapon": "2h_axe",
+        "weapon_bonus": 0
+    },
+    "Tibery" : {
+        "soldat": 4,
+        "voyageur": 2,
+        "érudit": 0,
+        "archer": 4,
+        "assassin": 2,
+        "berzekr": 0,
+        "guerrier": 0,
+        "weapon": "longbow",
+        "weapon_bonus" : 1,
+        "ca_armor": 1,
+        "ca_shield": 0
+    },
+    "TheNoseReaper": {
+        "soldat": 4,
+        "voyageur": 1,
+        "érudit": 1,
+        "guerrier": 3,
+        "berzerkr": 1,
+        "weapon": "2h_sword",
+        "weapon_bonus": 0,
+        "ca_armor": 2
+    }
+}
