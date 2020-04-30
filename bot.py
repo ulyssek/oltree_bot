@@ -1,14 +1,13 @@
 from config import token
 from config import players
 from toolbox import *
+from timeline import *
 
 import discord
 import numpy as np
 import random
 import json
 from time import sleep
-
-
 
 file_name = "cards.json"
 players_json = "players.json"
@@ -70,7 +69,7 @@ def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weap
         elif jet == "berzekr":
             msg = "Jet de combat (%s) de %s. (Le bonus de guerrier est pris en compte).\n" % (jet, player)
         elif jet == "archer":
-            msg = "Jet de combat (%s) de %s. Malus pour les tirs à grande distance.\n" 
+            msg = "Jet de combat (%s) de %s. Malus pour les tirs à grande distance.\n" %(jet, player) 
         else:
             msg = "Jet de machin de %s. En vrai %s c'est pas parmi les trucs supportés donc va falloir appliquer les bonus à la main ou vérifier que tu aies pas écrit n'importe quoi. Bisous.\n" % (player, jet)
     else:
@@ -291,7 +290,32 @@ async def cmd_drop_hand(message):
 
     await message.channel.send("Voilà Voilà")
 
+async def cmd_day(message):
+    """Affiche les informations de la journée"""
+    await message.channel.send(get_date(client.stored_values["timeline"]))
 
+async def cmd_next_day(message):
+    """Passe au jour suivant"""
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["day"] += 1
+    client.stored_values["timeline"]["hunger"] += 1
+    await message.channel.send(get_date(client.stored_values["timeline"]))
+    store_timeline(client)
+
+async def cmd_record_event(message):
+    """$duration $event - Enregistre un événement $event qui sera réaffiché pendant $duration jours."""
+    duration = int(message.content.split()[1])
+    event = " ".join(message.content.split()[2:])
+    day = client.stored_values["timeline"]["day"]
+    client.stored_values["timeline"]["events"].append({'duration': duration, 'date_record':day, 'event': event})
+    store_timeline(client)
+    await message.channel.send("Evénement enregistré !")
+
+async def cmd_eat(message):
+    """Indique que le groupe a mangé (ne gère pas les cas où juste une partie du groupe mange"""
+    client.stored_values["timeline"]["hunger"] = 0
+    store_timeline(client)
+    await message.channel.send("Le groupe a mangé.\n\n\"*Il est nécessaire de s'alimenter régulièrement sinon c'est la mort assurée !*\"\n\t- *Manuel du patrouilleur, Chapitre IX: Comment ne pas mourir lors de sa première patrouille*\n")
 
 commands = {
     ';hello': cmd_hello,
@@ -311,6 +335,10 @@ commands = {
     ';take': cmd_take,
     ';skills': cmd_skills,
     ';drop_hand' : cmd_drop_hand,
+    ';day' : cmd_day,
+    ';next_day' : cmd_next_day,
+    ';record_event': cmd_record_event,
+    ';eat': cmd_eat,
 }
 
 weapons_dict = {
@@ -343,6 +371,10 @@ with open(file_name) as json_file:
 with open(players_json) as json_file:
     client.stored_values["players"] = json.load(json_file)
 
+with open("timeline.json") as json_file: # TODO
+    client.stored_values["timeline"] = json.load(json_file)
+
+
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
@@ -367,10 +399,11 @@ async def on_message(message):
             await channel.send(help_msg)
         else:
             return await commands[command](message)
-    except:
+    except Exception as e:
         await message.channel.send("Il s'est passé un truc qui devait pas se passer comme on avait dit que ça devait se passer")
         sleep(1.5)
         await message.channel.send("Enfin je crois")
+        raise Exception(e)
 
 
 client.run(token)
