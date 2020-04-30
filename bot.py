@@ -1,14 +1,13 @@
 from config import token
 from config import players
 from toolbox import *
+from timeline import *
 
 import discord
 import numpy as np
 import random
 import json
 from time import sleep
-
-
 
 file_name = "cards.json"
 players_json = "players.json"
@@ -51,9 +50,10 @@ def get_bonus(jet, player):
             bonus_touch = client.stored_values["players"][player][jet]
         else:
             bonus_touch = client.stored_values["players"][player]["soldat"]
-            if jet == "berzekr":
+            if jet == "berzekr": # Bonus de berzekr + bonus de guerrier
                 bonus_touch += client.stored_values["players"][player]["berzekr"]
                 bonus_dmg = client.stored_values["players"][player]["berzekr"]
+                bonus_dmg += client.stored_values["players"][player]["guerrier"]
             elif jet in ["guerrier", "archer"]:
                 bonus_dmg = client.stored_values["players"][player][jet]
     return bonus_touch, bonus_dmg
@@ -62,20 +62,33 @@ def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weap
     rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
     mait, prou, exalt = map(lambda x: int(x), rolls)
     if jet:
-        msg = "Jet de %s de %s\n" % (jet, player)
+        if jet in ["soldat", "voyageur", "érudit"]:
+            msg = "Jet de vocation (%s) de %s\n" % (jet, player)
+        elif jet == "guerrier":
+            msg = "Jet de combat (%s) de %s\n" % (jet, player)
+        elif jet == "berzekr":
+            msg = "Jet de combat (%s) de %s. (Le bonus de guerrier est pris en compte).\n" % (jet, player)
+        elif jet == "archer":
+            msg = "Jet de combat (%s) de %s. Malus pour les tirs à grande distance.\n" %(jet, player) 
+        else:
+            msg = "Jet de machin de %s. En vrai %s c'est pas parmi les trucs supportés donc va falloir appliquer les bonus à la main ou vérifier que tu aies pas écrit n'importe quoi. Bisous.\n" % (player, jet)
     else:
         msg = "Jet standard de %s\n" % player
     if weapon:
         msg += "Arme (les dégâts à appliquer manuellement): %s\n" % weapons_dict[weapon]
-        msg += "Bonus arme: + %d dégâts\n" % int(weapon_bonus)
+    if weapon_bonus:
+        msg += "Bonus arme (à appliquer): + %d dégâts\n" % int(weapon_bonus)
     msg += "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
-    msg += "%d (%d dégâts) ou %d (%d dégâts) ou %d (%d dégâts)" % (
+    msg += "%d (%d dégâts%s) ou %d (%d dégâts%s) ou %d (%d dégâts%s)" % (
             mait + prou + bonus_touch,
             mait + bonus_dmg,
+            ", prouesse " + str(prou) if prou < 5 else "",
             mait + exalt + bonus_touch,
             mait + bonus_dmg,
+            ", prouesse " + str(exalt) if exalt < 5 else "",
             exalt + prou + bonus_touch,
-            exalt + bonus_dmg)
+            exalt + bonus_dmg,
+            ", prouesse " + str(prou) if prou < 5 else "")
     return msg
 
 async def cmd_skills(message):
@@ -130,16 +143,25 @@ async def cmd_change_dices(message):
 async def draw_card(message, number, offset):
     boule = True
     player = get_player_name(message)
-
-    while boule:
-        new_card = random.randint(number, offset + number)
-        boule = new_card in all_cards(client.stored_values["cards"])
-    await message.channel.send("Carte tirée : " + str(new_card))
-    if not 73 <= new_card <= 97:
-        client.stored_values["cards"][player].append(new_card)
-        store_cards(client)
-    await send_card(message.channel,new_card)
-    sort_cards(client)
+    try:
+        card_number = int(str(message.content).split(" ")[1])
+    except:
+        card_number = 1
+    if card_number > 6:
+        await message.channel.send("Ca fait beaucoup de cartes non?")
+        return
+    
+    for i in range(card_number):
+        boule = True
+        while boule:
+            new_card = random.randint(number, offset + number)
+            boule = new_card in all_cards(client.stored_values["cards"])
+        await message.channel.send("Carte tirée : " + str(new_card))
+        if not 73 <= new_card <= 97:
+            client.stored_values["cards"][player].append(new_card)
+            store_cards(client)
+        await send_card(message.channel,new_card)
+        sort_cards(client)
 
 async def cmd_exal(message):
     """$value: Tire $value cartes d'exhaltation"""
@@ -191,8 +213,11 @@ async def cmd_play(message):
 
 async def cmd_cards(message):
     """Montre la liste des cartes des joueurs"""
+    msg = ""
     for key in client.stored_values["cards"].keys():
-        await message.channel.send(key + " " + str(client.stored_values["cards"][key]))
+        msg += key + " " + str(client.stored_values["cards"][key])+"\n"
+
+    await message.channel.send(msg)
 
 async def cmd_get_card(message):
     """$value: Tire la carte $value"""
@@ -213,7 +238,7 @@ async def cmd_my_cards(message):
         await send_card(message.channel,card_number)
 
 async def cmd_take(message):
-    """$value $player: Prend $value"""
+    """$value : Prend $value"""
     content = message.content
     player = get_player_name(message)
     try:
@@ -265,7 +290,32 @@ async def cmd_drop_hand(message):
 
     await message.channel.send("Voilà Voilà")
 
+async def cmd_day(message):
+    """Affiche les informations de la journée"""
+    await message.channel.send(get_date(client.stored_values["timeline"]))
 
+async def cmd_next_day(message):
+    """Passe au jour suivant"""
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["day"] += 1
+    client.stored_values["timeline"]["hunger"] += 1
+    await message.channel.send(get_date(client.stored_values["timeline"]))
+    store_timeline(client)
+
+async def cmd_record_event(message):
+    """$duration $event - Enregistre un événement $event qui sera réaffiché pendant $duration jours."""
+    duration = int(message.content.split()[1])
+    event = " ".join(message.content.split()[2:])
+    day = client.stored_values["timeline"]["day"]
+    client.stored_values["timeline"]["events"].append({'duration': duration, 'date_record':day, 'event': event})
+    store_timeline(client)
+    await message.channel.send("Evénement enregistré !")
+
+async def cmd_eat(message):
+    """Indique que le groupe a mangé (ne gère pas les cas où juste une partie du groupe mange"""
+    client.stored_values["timeline"]["hunger"] = 0
+    store_timeline(client)
+    await message.channel.send("Le groupe a mangé.\n\n\"*Il est nécessaire de s'alimenter régulièrement sinon c'est la mort assurée !*\"\n\t- *Manuel du patrouilleur, Chapitre IX: Comment ne pas mourir lors de sa première patrouille*\n")
 
 commands = {
     ';hello': cmd_hello,
@@ -285,6 +335,10 @@ commands = {
     ';take': cmd_take,
     ';skills': cmd_skills,
     ';drop_hand' : cmd_drop_hand,
+    ';day' : cmd_day,
+    ';next_day' : cmd_next_day,
+    ';record_event': cmd_record_event,
+    ';eat': cmd_eat,
 }
 
 weapons_dict = {
@@ -317,13 +371,17 @@ with open(file_name) as json_file:
 with open(players_json) as json_file:
     client.stored_values["players"] = json.load(json_file)
 
+with open("timeline.json") as json_file: # TODO
+    client.stored_values["timeline"] = json.load(json_file)
+
+
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == client.user or message.content[0] != ';':
         return
     try:
         command = message.content.split()[0]
@@ -332,7 +390,7 @@ async def on_message(message):
 
         print(get_player_name(message) + ' - ' + str(message.content))
         
-        if command[0] == ';' and command not in commands.keys() and command != ";help":
+        if command not in commands.keys() and command != ";help":
             await message.channel.send("Ca marcherait mieux si tu regardais ton clavier en tapant")
             return
 
@@ -341,10 +399,11 @@ async def on_message(message):
             await channel.send(help_msg)
         else:
             return await commands[command](message)
-    except:
+    except Exception as e:
         await message.channel.send("Il s'est passé un truc qui devait pas se passer comme on avait dit que ça devait se passer")
         sleep(1.5)
         await message.channel.send("Enfin je crois")
+        raise Exception(e)
 
 
 client.run(token)

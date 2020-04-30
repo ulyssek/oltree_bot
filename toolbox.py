@@ -7,6 +7,7 @@ import discord
 
 file_name = "cards.json"
 players_json = "players.json"
+timeline_json = "timeline.json"
 
 
 def get_randint(bound):
@@ -54,4 +55,8 @@ def sort_cards(client):
     for player in client.stored_values["cards"]:
         client.stored_values["cards"][player].sort()
 
+def store_timeline(client):
+    cards = client.stored_values["timeline"]
+    with open(timeline_json, 'w') as fp:
+        json.dump(cards, fp)
 
