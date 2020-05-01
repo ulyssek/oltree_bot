@@ -1,5 +1,4 @@
-from config import token
-from config import players
+from config import token, players, MEUJEU
 from toolbox import *
 from timeline import *
 
@@ -49,7 +48,7 @@ def get_bonus(jet, player):
     bonus_touch = 0
     bonus_dmg = 0
     if jet in classes:
-        if jet in vocations:#["soldat","voyageur","érudit"]: 
+        if jet in vocations:
             bonus_touch = client.stored_values["players"][player][jet]
         else:
             bonus_touch = client.stored_values["players"][player]["Soldat"]
@@ -65,7 +64,7 @@ def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weap
     rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
     mait, prou, exalt = map(lambda x: int(x), rolls)
     if jet:
-        if jet in vocations:#["soldat","voyageur","érudit"]: 
+        if jet in vocations:
             msg = "Jet de vocation (%s) de %s\n" % (jet, player)
         elif jet == "Guerrier":
             msg = "Jet de combat (%s) de %s\n" % (jet, player)
@@ -348,6 +347,17 @@ async def cmd_eat(message):
     store_timeline(client)
     await message.channel.send("Le groupe a mangé.\n\n\"*Il est nécessaire de s'alimenter régulièrement sinon c'est la mort assurée !*\"\n\t- *Manuel du patrouilleur, Chapitre IX: Comment ne pas mourir lors de sa première patrouille*\n")
 
+
+async def cmd_load(message):
+    """Reload tous les fichiers (cartes, joueurs, skills,...) - Commande réservée au MJ"""
+    player = get_player_name(message)
+    if player != MEUJEU:
+        await message.channel.send("Fais pas le malin mon p'tit gars")
+        return
+    load(client)
+    await message.channel.send("Voilà Voilà")
+
+
 commands = {
     ';hello': cmd_hello,
     ';bagarre': cmd_bagarre,
@@ -370,6 +380,7 @@ commands = {
     ';next_day' : cmd_next_day,
     ';record_event': cmd_record_event,
     ';eat': cmd_eat,
+    ';load': cmd_load,
 }
 
 weapons_dict = {
@@ -400,15 +411,8 @@ jobs = ["Archer","Assassin","Berzekr","Guerrier","Druide","Maître des bêtes"]
 weapons = ["Arme","Arme bonus"]
 armor = ["Armure","Bouclier"]
 
-with open(file_name) as json_file:
-    client.stored_values["cards"] = json.load(json_file)
 
-
-with open(players_json) as json_file:
-    client.stored_values["players"] = json.load(json_file)
-
-with open("timeline.json") as json_file: # TODO
-    client.stored_values["timeline"] = json.load(json_file)
+load(client)
 
 
 @client.event

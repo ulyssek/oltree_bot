@@ -60,3 +60,14 @@ def store_timeline(client):
     with open(timeline_json, 'w') as fp:
         json.dump(cards, fp)
 
+def load(client):
+    with open(file_name) as json_file:
+        client.stored_values["cards"] = json.load(json_file)
+
+    with open(players_json) as json_file:
+        client.stored_values["players"] = json.load(json_file)
+
+    with open("timeline.json") as json_file: # TODO
+        client.stored_values["timeline"] = json.load(json_file)
+
+
