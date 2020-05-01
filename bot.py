@@ -25,8 +25,8 @@ async def cmd_bagarre(message):
     client.stored_values["jets"][player] = jet
     client.stored_values["dices"][player] = rolls
     ace = client.stored_values["ace"][player] = (rolls == dice_value)
-    weapon = client.stored_values["players"][player]["weapon"]
-    weapon_bonus = client.stored_values["players"][player]["weapon_bonus"]
+    weapon = client.stored_values["players"][player]["Arme"]
+    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
     msg_bagarre = format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon, weapon_bonus)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
@@ -40,21 +40,24 @@ def parse_bagarre(message):
     jet = None
     if len(values) > 1:
         jet = values[1]
+    if type(jet) == str:
+        jet = jet.capitalize()
     return get_bonus(jet, player) + (jet,)
 
 def get_bonus(jet, player):
+    print(jet)
     bonus_touch = 0
     bonus_dmg = 0
     if jet in classes:
-        if jet in ["soldat", "voyageur", "érudit"]:
+        if jet in vocations:#["soldat","voyageur","érudit"]: 
             bonus_touch = client.stored_values["players"][player][jet]
         else:
-            bonus_touch = client.stored_values["players"][player]["soldat"]
-            if jet == "berzekr": # Bonus de berzekr + bonus de guerrier
-                bonus_touch += client.stored_values["players"][player]["berzekr"]
-                bonus_dmg = client.stored_values["players"][player]["berzekr"]
-                bonus_dmg += client.stored_values["players"][player]["guerrier"]
-            elif jet in ["guerrier", "archer"]:
+            bonus_touch = client.stored_values["players"][player]["Soldat"]
+            if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
+                bonus_touch += client.stored_values["players"][player]["Berzekr"]
+                bonus_dmg = client.stored_values["players"][player]["Berzekr"]
+                bonus_dmg += client.stored_values["players"][player]["Guerrier"]
+            elif jet in ["Guerrier", "Archer"]:
                 bonus_dmg = client.stored_values["players"][player][jet]
     return bonus_touch, bonus_dmg
 
@@ -62,13 +65,13 @@ def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weap
     rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
     mait, prou, exalt = map(lambda x: int(x), rolls)
     if jet:
-        if jet in ["soldat", "voyageur", "érudit"]:
+        if jet in vocations:#["soldat","voyageur","érudit"]: 
             msg = "Jet de vocation (%s) de %s\n" % (jet, player)
-        elif jet == "guerrier":
+        elif jet == "Guerrier":
             msg = "Jet de combat (%s) de %s\n" % (jet, player)
-        elif jet == "berzekr":
+        elif jet == "Berzekr":
             msg = "Jet de combat (%s) de %s. (Le bonus de guerrier est pris en compte).\n" % (jet, player)
-        elif jet == "archer":
+        elif jet == "Archer":
             msg = "Jet de combat (%s) de %s. Malus pour les tirs à grande distance.\n" %(jet, player) 
         else:
             msg = "Jet de machin de %s. En vrai %s c'est pas parmi les trucs supportés donc va falloir appliquer les bonus à la main ou vérifier que tu aies pas écrit n'importe quoi. Bisous.\n" % (player, jet)
@@ -91,12 +94,40 @@ def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weap
             ", prouesse " + str(prou) if prou < 5 else "")
     return msg
 
-async def cmd_skills(message):
+async def cmd_skills(message,player=None):
     """Affiche les statistiques"""
-    player = get_player_name(message)
-    msg = "Compétences de %s\n" % player
-    msg += "\n".join(["%s: %s" % (key,val) for (key,val) in client.stored_values["players"][player].items()])
+    if player is None:
+        if " " in message.content:
+            player = message.content.split()[1]
+            if player == "all":
+                for p in client.stored_values["players"].keys():
+                    await cmd_skills(message,p)
+        else:
+            player = get_player_name(message)
+        if player not in client.stored_values["players"].keys():
+            await message.channel.send("Jamais entendu de parler de ce gars là")
+            return 
+    player_skills = client.stored_values["players"][player]
+    msg = "**Compétences de %s" % player + "**"
+    msg += "\n*CA*: %s *Mana*: %s *PV Max*: %s *Vigilance:* %s" % (10+sum(list(map(lambda x : player_skills[x],armor)))+int(player_skills["Guerrier"]/2),player_skills["DV"]*2+player_skills["Érudit"],player_skills["PV Max"],10+player_skills["Voyageur"]+int(player_skills["Assassin"]/2))
+    msg += "\n**Vocations**\n"
+    msg += " ".join(["%s : %s" % ("*"+vocation+"*",player_skills[vocation]) for vocation in vocations])
+    msg += "\n**Métiers**\n"
+    msg += " ".join(["%s : %s" % ("*"+job+"*",player_skills[job]) for job in jobs if str(player_skills[job])!='0'])
+    msg += "\n**Armes**\n"
+    temp = ["%s : %s" % ("*"+weapon+"*",player_skills[weapon]) for weapon in weapons if str(player_skills[weapon])!='0']
+    if temp == []:
+        msg += "Nada"
+    else:
+        msg += " ".join(temp)
+    msg += "\n**Armures**\n"
+    temp = ["%s : %s" % ("*"+armor+"*",player_skills[armor]) for armor in armor if str(player_skills[armor])!='0']
+    if temp == []:
+        msg += "Nada"
+    else:
+        msg += " ".join(temp)
     await message.channel.send(msg)
+
 
 async def cmd_explode(message):
     """Relance les dés qui ont explosé au précédent jet du joueur"""
@@ -116,8 +147,8 @@ async def cmd_explode(message):
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
-    weapon = client.stored_values["players"][player]["weapon"]
-    weapon_bonus = client.stored_values["players"][player]["weapon_bonus"]
+    weapon = client.stored_values["players"][player]["Arme"]
+    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
     msg_bagarre = format_bagarre(player, jet, stored_dices, bonus_touch, bonus_dmg, weapon, weapon_bonus)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
@@ -354,7 +385,7 @@ weapons_dict = {
 
 client = discord.Client()
 
-classes =  ["soldat", "voyageur", "érudit", "archer", "assassin", "berzekr", "guerrier"]
+classes =  ["Soldat", "Voyageur", "Érudit", "Archer", "Assassin", "Berzekr", "Guerrier"]
 
 client.stored_values = {
         "count" : 0,
@@ -363,6 +394,11 @@ client.stored_values = {
         "dices":{},
         "jets":{},
         }
+
+vocations = ["Soldat","Voyageur","Érudit"]
+jobs = ["Archer","Assassin","Berzekr","Guerrier","Druide","Maître des bêtes"]
+weapons = ["Arme","Arme bonus"]
+armor = ["Armure","Bouclier"]
 
 with open(file_name) as json_file:
     client.stored_values["cards"] = json.load(json_file)
