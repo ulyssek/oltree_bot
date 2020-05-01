@@ -44,7 +44,6 @@ def parse_bagarre(message):
     return get_bonus(jet, player) + (jet,)
 
 def get_bonus(jet, player):
-    print(jet)
     bonus_touch = 0
     bonus_dmg = 0
     if jet in classes:
@@ -386,8 +385,8 @@ commands = {
 weapons_dict = {
         "1h_sword": "Epée",
         "2h_sword": "Epée à deux mains (+2 dégâts)",
-        "1h_axe": "Hache (-1 CA contre combattants armés, +2 dégâts contre monstres",
-        "2h_axe": "Hache à deux mains (-1 CA contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
+        "1h_axe": "Hache (-1 à l'attaque contre combattants armés, +2 dégâts contre monstres",
+        "2h_axe": "Hache à deux mains (-1 à l'attaque contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
         "longbow": "Arc long",
         "shortbow": "Arc court",
         "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
