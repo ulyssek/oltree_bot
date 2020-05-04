@@ -1,4 +1,4 @@
-from config import token, players, MEUJEU
+from config import token, players, MEUJEU, MEUJEU_ID
 from toolbox import *
 from timeline import *
 
@@ -6,6 +6,7 @@ import discord
 import numpy as np
 import random
 import json
+import pprint
 from time import sleep
 
 file_name = "cards.json"
@@ -15,15 +16,22 @@ async def cmd_hello(message):
     """Un p'tit coucou"""
     await message.channel.send("Fais pas le malin mon p'tit gars")
 
+
+async def cmd_init(message):
+    """Lance l'initiative pour tous les joueurs"""
+    jet = "Soldat"
+    for player in client.stored_values["players"].keys():
+            bonus_touch, bonus_dmg, jet = get_bonus(jet,player)+(jet,)
+    await message.channel.send(client.stored_values["players"].keys())
+
 async def cmd_bagarre(message):
     """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
-    dice_value = client.stored_values["dice_value"]
+
     bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
-    rolls = roll_n_dices(3,dice_value,False)
     player = get_player_name(message)
-    client.stored_values["jets"][player] = jet
-    client.stored_values["dices"][player] = rolls
-    ace = client.stored_values["ace"][player] = (rolls == dice_value)
+
+    rolls,ace = roll(client,player,jet)
+
     weapon = client.stored_values["players"][player]["Arme"]
     weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
     msg_bagarre = format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon, weapon_bonus)
@@ -44,7 +52,6 @@ def parse_bagarre(message):
     return get_bonus(jet, player) + (jet,)
 
 def get_bonus(jet, player):
-    print(jet)
     bonus_touch = 0
     bonus_dmg = 0
     if jet in classes:
@@ -187,23 +194,41 @@ async def draw_card(message, number, offset):
             new_card = random.randint(number, offset + number)
             boule = new_card in all_cards(client.stored_values["cards"])
         await message.channel.send("Carte tirée : " + str(new_card))
-        if not 73 <= new_card <= 97:
-            client.stored_values["cards"][player].append(new_card)
-            store_cards(client)
         await send_card(message.channel,new_card)
         sort_cards(client)
+        return new_card
 
 async def cmd_exal(message):
     """$value: Tire $value cartes d'exhaltation"""
-    await draw_card(message, 1, 53)
+    player = get_player_name(message)
+    new_card = await draw_card(message, 1, 53)
+    client.stored_values["cards"][player].append(new_card)
+    sort_cards(client)
+    store_cards(client)
 
 async def cmd_pers(message):
     """$value: Tire $value cartes de persécution"""
-    await draw_card(message, 55, 18)
+    player = get_player_name(message)
+    new_card = await draw_card(message, 55, 18)
+    client.stored_values["cards"][player].append(new_card)
+    sort_cards(client)
+    store_cards(client)
 
 async def cmd_patr(message):
     """$value: Tire $value cartes de patrouille"""
-    await draw_card(message, 73, 36)
+    player = get_player_name(message)
+    new_card = await draw_card(message, 73, 36)
+    if new_card >= 97:
+        client.stored_values["cards"][player].append(new_card)
+        sort_cards(client)
+        store_cards(client)
+    else:
+        rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
+        msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
+
+        meujeu = await client.fetch_user(MEUJEU_ID)
+        await meujeu.send(msg)
+
 
 async def cmd_drop_card(message):
     """$value: jette la carte $value"""
@@ -381,6 +406,7 @@ commands = {
     ';record_event': cmd_record_event,
     ';eat': cmd_eat,
     ';load': cmd_load,
+    ';init': cmd_init,
 }
 
 weapons_dict = {
@@ -399,7 +425,6 @@ client = discord.Client()
 classes =  ["Soldat", "Voyageur", "Érudit", "Archer", "Assassin", "Berzekr", "Guerrier"]
 
 client.stored_values = {
-        "count" : 0,
         "dice_value" : 8,
         "ace":{},
         "dices":{},
