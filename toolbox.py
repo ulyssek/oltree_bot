@@ -27,6 +27,15 @@ def roll_n_dices(n,bound,explode=True):
         rolls[i] = roll_a_dice(bound,explode,0)
     return rolls
 
+def roll(client,player,jet,dice_value=None,dice_number=3,explode=False):
+    if dice_value is None:
+        dice_value = client.stored_values["dice_value"]
+    rolls = roll_n_dices(dice_number,dice_value,explode)
+    client.stored_values["jets"][player] = jet
+    client.stored_values["dices"][player] = rolls
+    ace = client.stored_values["ace"][player] = (rolls == dice_value)
+    return rolls,ace
+
 def get_sum(rolls):
     sorted_rolls = np.sort(rolls)
     return int(sum(sorted_rolls[-2:]))
@@ -67,7 +76,6 @@ def load(client):
     with open(players_json) as json_file:
         client.stored_values["players"] = json.load(json_file)
 
-    with open("timeline.json") as json_file: # TODO
+    with open("timeline.json") as json_file:
         client.stored_values["timeline"] = json.load(json_file)
-
 
