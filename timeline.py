@@ -72,7 +72,7 @@ def get_date(date):
     for event in date["events"]:
         ecart = event["date_record"] + event["duration"] - date["day"]
         if ecart > 0:
-            msg += "%s (%d jours restants)\n" % (event["event"]+1, ecart)
+            msg += "%s (%d jours restants)\n" % (event["event"], ecart+1)
         elif ecart == 0:
             msg += "%s (Dernier jour)\n" % event["event"]
         else:
