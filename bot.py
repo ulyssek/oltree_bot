@@ -230,26 +230,34 @@ async def cmd_exal(message):
 async def cmd_pers(message):
     """$value: Tire $value cartes de persécution"""
     player = get_player_name(message)
-    new_card = await draw_card(message, 55, 18)
-    client.stored_values["cards"][player].append(new_card)
+    if len(message.content.split()) > 1:
+        nb_cards = int(message.content.split()[1])
+    else:
+        nb_cards = 1
+    for i in range(nb_cards):
+        new_card = await draw_card(message, 55, 18)
+        client.stored_values["cards"][player].append(new_card)
     sort_cards(client)
     store_cards(client)
 
 async def cmd_patr(message):
     """$value: Tire $value cartes de patrouille"""
     player = get_player_name(message)
-    new_card = await draw_card(message, 73, 36)
-    if new_card >= 97:
-        client.stored_values["cards"][player].append(new_card)
-        sort_cards(client)
-        store_cards(client)
+    if len(message.content.split()) > 1:
+        nb_cards = int(message.content.split()[1])
     else:
-        rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
-        msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
-
-        meujeu = await client.fetch_user(MEUJEU_ID)
-        await meujeu.send(msg)
-
+        nb_cards = 1
+    for i in range(nb_cards):
+        new_card = await draw_card(message, 73, 36)
+        if new_card >= 97:
+            client.stored_values["cards"][player].append(new_card)
+            sort_cards(client)
+            store_cards(client)
+        else:
+            rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
+            msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
+            meujeu = await client.fetch_user(MEUJEU_ID)
+            await meujeu.send(msg)
 
 async def cmd_drop_card(message):
     """$value: jette la carte $value"""
