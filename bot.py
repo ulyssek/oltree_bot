@@ -1,6 +1,7 @@
 from config import token, players, MEUJEU, MEUJEU_ID
 from toolbox import *
 from timeline import *
+from player import *
 
 import discord
 import numpy as np
@@ -61,6 +62,8 @@ def get_bonus(jet, player):
     if jet in classes:
         if jet in vocations:
             bonus_touch = client.stored_values["players"][player][jet]
+
+
         else:
             bonus_touch = client.stored_values["players"][player]["Soldat"]
             if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
@@ -129,25 +132,10 @@ async def cmd_skills(message,player=None):
         if player not in client.stored_values["players"].keys():
             await message.channel.send("Jamais entendu de parler de ce gars là")
             return 
-    player_skills = client.stored_values["players"][player]
-    msg = "**Compétences de %s" % player + "**"
-    msg += "\n*CA*: %s *Mana*: %s *PV Max*: %s *Vigilance:* %s" % (10+sum(list(map(lambda x : player_skills[x],armor)))+int(player_skills["Guerrier"]/2),player_skills["DV"]*2+player_skills["Érudit"],player_skills["PV Max"],10+player_skills["Voyageur"]+int(player_skills["Assassin"]/2))
-    msg += "\n**Vocations**\n"
-    msg += " ".join(["%s : %s" % ("*"+vocation+"*",player_skills[vocation]) for vocation in vocations])
-    msg += "\n**Métiers**\n"
-    msg += " ".join(["%s : %s" % ("*"+job+"*",player_skills[job]) for job in jobs if str(player_skills[job])!='0'])
-    msg += "\n**Armes**\n"
-    temp = ["%s : %s" % ("*"+weapon+"*",player_skills[weapon]) for weapon in weapons if str(player_skills[weapon])!='0']
-    if temp == []:
-        msg += "Nada"
-    else:
-        msg += " ".join(temp)
-    msg += "\n**Armures**\n"
-    temp = ["%s : %s" % ("*"+armor+"*",player_skills[armor]) for armor in armor if str(player_skills[armor])!='0']
-    if temp == []:
-        msg += "Nada"
-    else:
-        msg += " ".join(temp)
+    
+    player_obj = Player(player, client.stored_values["players"][player])
+    msg = player_obj.format_skills()
+
     await message.channel.send(msg)
 
 
