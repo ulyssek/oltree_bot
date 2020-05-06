@@ -217,8 +217,13 @@ async def draw_card(message, number, offset):
 async def cmd_exal(message):
     """$value: Tire $value cartes d'exhaltation"""
     player = get_player_name(message)
-    new_card = await draw_card(message, 1, 53)
-    client.stored_values["cards"][player].append(new_card)
+    if len(message.content.split()) > 1:
+        nb_cards = int(message.content.split()[1])
+    else:
+        nb_cards = 1
+    for i in range(nb_cards):
+        new_card = await draw_card(message, 1, 53)
+        client.stored_values["cards"][player].append(new_card)
     sort_cards(client)
     store_cards(client)
 
