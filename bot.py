@@ -361,21 +361,8 @@ commands = {
     ';bagaarre': cmd_bagaarre,
 }
 
-weapons_dict = {
-        "1h_sword": "Epée",
-        "2h_sword": "Epée à deux mains (+2 dégâts)",
-        "1h_axe": "Hache (-1 à l'attaque contre combattants armés, +2 dégâts contre monstres",
-        "2h_axe": "Hache à deux mains (-1 à l'attaque contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
-        "longbow": "Arc long",
-        "shortbow": "Arc court",
-        "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
-        "dagger": "Dague (-2 CA contre adversaires avec arme plus longue, pas de malus en milieu confiné)",
-        }
 
 client = discord.Client()
-
-classes =  ["Soldat", "Voyageur", "Érudit", "Archer", "Assassin", "Berzekr", "Guerrier"]
-
 client.stored_values = {
         "dice_value" : 8,
         "ace":{},
@@ -383,13 +370,6 @@ client.stored_values = {
         "jets":{},
         "players": {},
         }
-
-vocations = ["Soldat","Voyageur","Érudit"]
-jobs = ["Archer","Assassin","Berzekr","Guerrier","Druide","Maître des bêtes"]
-weapons = ["Arme","Arme bonus"]
-armor = ["Armure","Bouclier"]
-
-
 load(client)
 
 @client.event

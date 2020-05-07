@@ -1,6 +1,22 @@
 from config import *
 import numpy as np
 
+weapons_dict = {
+        "1h_sword": "Epée",
+        "2h_sword": "Epée à deux mains (+2 dégâts)",
+        "1h_axe": "Hache (-1 à l'attaque contre combattants armés, +2 dégâts contre monstres",
+        "2h_axe": "Hache à deux mains (-1 à l'attaque contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
+        "longbow": "Arc long",
+        "shortbow": "Arc court",
+        "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
+        "dagger": "Dague (-2 CA contre adversaires avec arme plus longue, pas de malus en milieu confiné)",
+        }
+
+vocations = ["Soldat","Voyageur","Érudit"]
+jobs = ["Archer","Assassin","Berzekr","Guerrier","Druide","Maître des bêtes"]
+weapons = ["Arme","Arme bonus"]
+armor = ["Armure","Bouclier"]
+
 class Player:
     def __init__(self, name, skills):
         self.name = name
@@ -20,7 +36,7 @@ class Player:
     def get_bonus(self, jet):
         bonus_touch = 0
         bonus_dmg = 0
-        if jet in classes:
+        if jet in vocations + jobs:
             if jet in vocations:
                 bonus_touch = self.skills[jet]
             else:
@@ -49,7 +65,7 @@ class Player:
             elif jet == "Berzekr":
                 msg = "**Jet de combat (%s) de %s**. (Le bonus de guerrier est pris en compte).\n" % (jet, self.name)
             elif jet == "Archer":
-                msg = "**Jet de combat (%s) de %s**. Malus pour les tirs à grande distance.\n" %(jet, self.name) 
+                msg = "**Jet de combat (%s) de %s**.\n" %(jet, self.name) 
             elif jet == "Initiative":
                 msg = "**Jet d'initiative de %s**\n" % (self.name)
             else:
