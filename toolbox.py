@@ -2,6 +2,7 @@ import numpy as np
 import random
 import json
 import discord
+from player import Player
 
 
 
@@ -31,9 +32,8 @@ def roll(client,player,jet,dice_value=None,dice_number=3,explode=False):
     if dice_value is None:
         dice_value = client.stored_values["dice_value"]
     rolls = roll_n_dices(dice_number,dice_value,explode)
-    client.stored_values["jets"][player] = jet
-    client.stored_values["dices"][player] = rolls
-    ace = client.stored_values["ace"][player] = (rolls == dice_value)
+
+    ace = (rolls == dice_value)
     return rolls,ace
 
 def get_sum(rolls):
@@ -74,7 +74,10 @@ def load(client):
         client.stored_values["cards"] = json.load(json_file)
 
     with open(players_json) as json_file:
-        client.stored_values["players"] = json.load(json_file)
+        #client.stored_values["players"] = json.load(json_file)
+        client.stored_values["players_obj"] = {}
+        for name, skills in json.load(json_file).items():
+            client.stored_values["players_obj"][name] = Player(name, skills)
 
     with open("timeline.json") as json_file:
         client.stored_values["timeline"] = json.load(json_file)

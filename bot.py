@@ -17,7 +17,6 @@ async def cmd_hello(message):
     """Un p'tit coucou"""
     await message.channel.send("Fais pas le malin mon p'tit gars")
 
-
 async def cmd_bagaarre(message):
     """Lance l'initiative pour tous les joueurs"""
     jet = "Initiative"
@@ -32,14 +31,14 @@ async def cmd_bagaarre(message):
 async def cmd_bagarre(message):
     """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
 
-    bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
     player = get_player_name(message)
+    bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
+    player_obj = client.stored_values["players_obj"][player]
 
-    rolls,ace = roll(client,player,jet)
+    rolls,ace = roll(client,player_obj.name,jet)
+    player_obj.rolls, player_obj.ace = rolls, ace
 
-    weapon = client.stored_values["players"][player]["Arme"]
-    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
-    msg_bagarre,_ = format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon, weapon_bonus)
+    msg_bagarre, _ = player_obj.skill_check(jet, rolls, ace)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -54,70 +53,11 @@ def parse_bagarre(message):
         jet = values[1]
     if type(jet) == str:
         jet = jet.capitalize()
-    return get_bonus(jet, player) + (jet,)
-
-def get_bonus(jet, player):
-    bonus_touch = 0
-    bonus_dmg = 0
-    if jet in classes:
-        if jet in vocations:
-            bonus_touch = client.stored_values["players"][player][jet]
-
-
-        else:
-            bonus_touch = client.stored_values["players"][player]["Soldat"]
-            if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
-                bonus_touch += client.stored_values["players"][player]["Berzekr"]
-                bonus_dmg = client.stored_values["players"][player]["Berzekr"]
-                bonus_dmg += client.stored_values["players"][player]["Guerrier"]
-            elif jet in ["Guerrier", "Archer"]:
-                bonus_dmg = client.stored_values["players"][player][jet]
-    elif jet == "Initiative":
-        bonus_touch = client.stored_values["players"][player]["Soldat"]
-    return bonus_touch, bonus_dmg
+    return (None, None, jet)
 
 def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weapon_bonus = 0):
-    rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
-    mait, prou, exalt = map(lambda x: int(x), rolls)
-    best_score = np.sum(np.sort(np.array((mait,prou,exalt)))[1:3])
-    #Préciser la nature du jet
-    if jet:
-        if jet in vocations:
-            msg = "**Jet de vocation (%s) de %s**\n" % (jet, player)
-        elif jet == "Guerrier":
-            msg = "**Jet de combat (%s) de %s**\n" % (jet, player)
-        elif jet == "Berzekr":
-            msg = "**Jet de combat (%s) de %s**. (Le bonus de guerrier est pris en compte).\n" % (jet, player)
-        elif jet == "Archer":
-            msg = "**Jet de combat (%s) de %s**. Malus pour les tirs à grande distance.\n" %(jet, player) 
-        elif jet == "Initiative":
-            msg = "**Jet d'initiative de %s**\n" % (player)
-        else:
-            msg = "**Jet de machin de %s**. En vrai %s c'est pas parmi les trucs supportés donc va falloir appliquer les bonus à la main ou vérifier que tu aies pas écrit n'importe quoi. Bisous.\n" % (player, jet)
-    else:
-        msg = "Jet standard de %s\n" % player
-    #Préciser l'arme utilisé
-    if weapon:
-        msg += "Arme (les dégâts à appliquer manuellement): %s\n" % weapons_dict[weapon]
-    #Préciser les bonus de l'arme
-    if weapon_bonus:
-        msg += "Bonus arme (à appliquer): + %d dégâts\n" % int(weapon_bonus)
-    msg += "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
-    #Préciser le résultat du jet (le meilleur est donné dans le cas d'un jet d'initiative
-    if jet == "Initiative":
-        msg += "Inititative de %s : %d\n\n\n" %(player,best_score+bonus_touch)
-    else:
-        msg += "%d (%d dégâts%s) ou %d (%d dégâts%s) ou %d (%d dégâts%s)" % (
-                mait + prou + bonus_touch,
-                mait + bonus_dmg,
-                ", prouesse " + str(prou) if prou < 5 else "",
-                mait + exalt + bonus_touch,
-                mait + bonus_dmg,
-                ", prouesse " + str(exalt) if exalt < 5 else "",
-                exalt + prou + bonus_touch,
-                exalt + bonus_dmg,
-                ", prouesse " + str(prou) if prou < 5 else "")
-    return msg,best_score
+    player_obj = client.stored_values["players_obj"][player]
+    return player_obj.format_bagarre(jet, rolls, bonus_touch, bonus_dmg)
 
 async def cmd_skills(message,player=None):
     """Affiche les statistiques"""
@@ -133,33 +73,28 @@ async def cmd_skills(message,player=None):
             await message.channel.send("Jamais entendu de parler de ce gars là")
             return 
     
-    player_obj = Player(player, client.stored_values["players"][player])
+    player_obj = client.stored_values["players_obj"][player]
     msg = player_obj.format_skills()
-
     await message.channel.send(msg)
-
 
 async def cmd_explode(message):
     """Relance les dés qui ont explosé au précédent jet du joueur"""
     player = get_player_name(message)
+    player_obj = client.stored_values["players_obj"][player]
     dice_value = client.stored_values["dice_value"]
-    jet = None
-    if player in client.stored_values["ace"].keys():
-        jet = client.stored_values["jets"][player]
-        ace = client.stored_values["ace"][player]
-    else:
-        ace = [0]
+    jet = player_obj.jet
+    ace = player_obj.ace
     if sum(ace) == 0:
         await message.channel.send("Fais pas le malin mon p'tit gars")
         return
-    bonus_touch, bonus_dmg = get_bonus(jet, player)
-    stored_dices = client.stored_values["dices"][player]
+
+    stored_dices = player_obj.rolls
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
-    weapon = client.stored_values["players"][player]["Arme"]
-    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
-    msg_bagarre,_ = format_bagarre(player, jet, stored_dices, bonus_touch, bonus_dmg, weapon, weapon_bonus)
+
+    msg_bagarre,_ = player_obj.skill_check(jet, stored_dices, ace)
+
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -446,6 +381,7 @@ client.stored_values = {
         "ace":{},
         "dices":{},
         "jets":{},
+        "players": {},
         }
 
 vocations = ["Soldat","Voyageur","Érudit"]
@@ -455,7 +391,6 @@ armor = ["Armure","Bouclier"]
 
 
 load(client)
-
 
 @client.event
 async def on_ready():
