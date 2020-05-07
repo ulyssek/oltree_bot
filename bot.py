@@ -20,13 +20,11 @@ async def cmd_hello(message):
 async def cmd_bagaarre(message):
     """Lance l'initiative pour tous les joueurs"""
     jet = "Initiative"
-    client.stored_values["init"] = {}
-    for player in client.stored_values["players"].keys():
-            bonus_touch, bonus_dmg, jet = get_bonus(jet,player)+(jet,)
-            rolls,ace = roll(client,player,jet,explode=True)
-            msg_bagarre,init = format_bagarre(player,jet,rolls,bonus_touch,bonus_dmg)
-            client.stored_values["init"][player] = init
-            await message.channel.send(msg_bagarre)
+    for player_obj in client.stored_values["players_obj"].values():
+        rolls,ace = roll(client,player_obj.name,jet, explode=True)
+        msg_bagarre, init = player_obj.skill_check(jet, rolls, ace)
+        player_obj.init = init
+        await message.channel.send(msg_bagarre)
 
 async def cmd_bagarre(message):
     """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""

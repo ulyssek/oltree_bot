@@ -24,6 +24,7 @@ class Player:
         self.ace = [False, False, False]
         self.rolls = None
         self.jet = None
+        self.init = None
 
     def skill_check(self,skill, rolls, ace):
         """Faire un test de vocation ou métier. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
@@ -93,7 +94,7 @@ class Player:
                     exalt + prou + bonus_touch,
                     exalt + bonus_dmg,
                     ", prouesse " + str(prou) if prou < 5 else "")
-            return msg, best_score
+        return msg, best_score
 
     def format_skills(self):
         """Affiche les statistiques"""
@@ -116,4 +117,3 @@ class Player:
         else:
             msg += " ".join(temp)
         return msg
-
