@@ -69,16 +69,21 @@ def store_timeline(client):
     with open(timeline_json, 'w') as fp:
         json.dump(cards, fp)
 
+def store_players(client):
+    players = {}
+    for key, value in client.stored_values["players_obj"].items():
+        players[key] = value.skills
+    with open(players_json, 'w') as fp:
+        json.dump(players, fp, sort_keys=True, indent=4)
+
 def load(client):
     with open(file_name) as json_file:
         client.stored_values["cards"] = json.load(json_file)
 
-    with open(players_json) as json_file:
-        #client.stored_values["players"] = json.load(json_file)
-        client.stored_values["players_obj"] = {}
-        for name, skills in json.load(json_file).items():
-            client.stored_values["players_obj"][name] = Player(name, skills)
-
-    with open("timeline.json") as json_file:
+    with open(timeline_json) as json_file:
         client.stored_values["timeline"] = json.load(json_file)
 
+    with open(players_json) as json_file:
+        client.stored_values["players_obj"] = {}
+        for name, skills in json.load(json_file).items():
+            client.stored_values["players_obj"][name] = Player(name, skills, client.stored_values["timeline"])

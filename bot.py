@@ -17,26 +17,30 @@ async def cmd_hello(message):
     """Un p'tit coucou"""
     await message.channel.send("Fais pas le malin mon p'tit gars")
 
-async def cmd_bagaarre(message):
-    """Lance l'initiative pour tous les joueurs"""
+async def cmd_fight(message):
+    """Commence un combat. L'initiative est lancée et quelques éléments d'information sur les combats sont affichés"""
     jet = "Initiative"
+    msg_bagarre = "C'EST LA BAGARRE !\n1) Tirer les initiatives\n2) Se battre\n\t;bagarre soldat/guerrier/berzekr/archer\n\t;bagarre soldat $param - param peut être monster (applique les bonus de hache), armed (applique les malus de hache), meteo (applique les malus de meteo)\n3) Fin:\n\t1 point de ressource pour le groupe sinon affaiblis\n\t1 point de ressource par blessé sinon mort\n\tRécupérer points de ressources (si MJ dit OK)\n\n"
+
     for player_obj in client.stored_values["players_obj"].values():
         rolls,ace = roll(client,player_obj.name,jet, explode=True)
-        msg_bagarre, init = player_obj.skill_check(jet, rolls, ace)
+        _, init = player_obj.skill_check(jet, rolls, ace)
+        msg_bagarre += _
         player_obj.init = init
-        await message.channel.send(msg_bagarre)
+
+    await message.channel.send(msg_bagarre)
 
 async def cmd_bagarre(message):
-    """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
+    """$vocation/métier $param - Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier). On peut aussi passer certains paramètres (monster: attaque contre un monstre, armed: attaque contre des gens armés, meteo: prendre en compte la météo)"""
 
     player = get_player_name(message)
-    bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
+    jet, params = parse_bagarre(message) 
     player_obj = client.stored_values["players_obj"][player]
 
     rolls,ace = roll(client,player_obj.name,jet)
     player_obj.rolls, player_obj.ace = rolls, ace
 
-    msg_bagarre, _ = player_obj.skill_check(jet, rolls, ace)
+    msg_bagarre, _ = player_obj.skill_check(jet, rolls, ace, params)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -47,15 +51,14 @@ def parse_bagarre(message):
     values = message.content.split()
     player = get_player_name(message)
     jet = None
+    params = []
     if len(values) > 1:
         jet = values[1]
+    if len(values) > 2:
+        params = values[2:]
     if type(jet) == str:
         jet = jet.capitalize()
-    return (None, None, jet)
-
-def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weapon_bonus = 0):
-    player_obj = client.stored_values["players_obj"][player]
-    return player_obj.format_bagarre(jet, rolls, bonus_touch, bonus_dmg)
+    return jet, params
 
 async def cmd_skills(message,player=None):
     """Affiche les statistiques"""
@@ -82,16 +85,17 @@ async def cmd_explode(message):
     dice_value = client.stored_values["dice_value"]
     jet = player_obj.jet
     ace = player_obj.ace
+    stored_dices = player_obj.rolls
+    params = player_obj.params
     if sum(ace) == 0:
         await message.channel.send("Fais pas le malin mon p'tit gars")
         return
 
-    stored_dices = player_obj.rolls
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
 
-    msg_bagarre,_ = player_obj.skill_check(jet, stored_dices, ace)
+    msg_bagarre,_ = player_obj.skill_check(jet, stored_dices, ace, params)
 
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
@@ -322,7 +326,6 @@ async def cmd_eat(message):
     store_timeline(client)
     await message.channel.send("Le groupe a mangé.\n\n\"*Il est nécessaire de s'alimenter régulièrement sinon c'est la mort assurée !*\"\n\t- *Manuel du patrouilleur, Chapitre IX: Comment ne pas mourir lors de sa première patrouille*\n")
 
-
 async def cmd_load(message):
     """Reload tous les fichiers (cartes, joueurs, skills,...) - Commande réservée au MJ"""
     player = get_player_name(message)
@@ -331,6 +334,15 @@ async def cmd_load(message):
         return
     load(client)
     await message.channel.send("Voilà Voilà")
+
+async def cmd_pv(message):
+    """$value - Modifie les PV de $value. Affiche les PV si pas de $value"""
+    params = message.content.split()
+    player = get_player_name(message)
+    if len(params) > 1:
+        client.stored_values["players_obj"][player].change_pv(int(params[1]))
+        store_players(client)
+    await message.channel.send(client.stored_values["players_obj"][player].format_pv())
 
 
 commands = {
@@ -356,7 +368,8 @@ commands = {
     ';record_event': cmd_record_event,
     ';eat': cmd_eat,
     ';load': cmd_load,
-    ';bagaarre': cmd_bagaarre,
+    ';fight': cmd_fight,
+    ';pv': cmd_pv,
 }
 
 
