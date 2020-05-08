@@ -305,7 +305,7 @@ async def cmd_day(message):
 
 async def cmd_next_day(message):
     """Passe au jour suivant"""
-    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
     client.stored_values["timeline"]["day"] += 1
     client.stored_values["timeline"]["hunger"] += 1
     await message.channel.send(get_date(client.stored_values["timeline"]))
@@ -344,6 +344,14 @@ async def cmd_pv(message):
         store_players(client)
     await message.channel.send(client.stored_values["players_obj"][player].format_pv())
 
+async def cmd_action(message):
+    """$value - Effectue l'action $action et avance le temps"""
+    params = message.content.split()
+    msg = "Préciser une action"
+    if len(params) > 1:
+        msg = take_action(params[1], client)
+        store_timeline(client)
+    await message.channel.send(msg)
 
 commands = {
     ';hello': cmd_hello,
@@ -370,6 +378,7 @@ commands = {
     ';load': cmd_load,
     ';fight': cmd_fight,
     ';pv': cmd_pv,
+    ';action' : cmd_action,
 }
 
 
