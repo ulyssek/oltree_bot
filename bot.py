@@ -23,7 +23,7 @@ async def cmd_fight(message):
     msg_bagarre = "C'EST LA BAGARRE !\n1) Tirer les initiatives\n2) Se battre\n\t;bagarre soldat/guerrier/berzekr/archer\n\t;bagarre soldat $param - param peut être monster (applique les bonus de hache), armed (applique les malus de hache), meteo (applique les malus de meteo)\n3) Fin:\n\t1 point de ressource pour le groupe sinon affaiblis\n\t1 point de ressource par blessé sinon mort\n\tRécupérer points de ressources (si MJ dit OK)\n\n"
 
     for player_obj in client.stored_values["players_obj"].values():
-        rolls,ace = roll(client,player_obj.name,jet, explode=True)
+        rolls,ace = roll(client,player_obj.name,jet, explode= not player_obj.skills["Affaibli"])
         _, init = player_obj.skill_check(jet, rolls, ace)
         msg_bagarre += _
         player_obj.init = init
