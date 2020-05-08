@@ -66,11 +66,11 @@ async def cmd_skills(message,player=None):
         if " " in message.content:
             player = message.content.split()[1]
             if player == "all":
-                for p in client.stored_values["players"].keys():
+                for p in client.stored_values["players_obj"].keys():
                     await cmd_skills(message,p)
         else:
             player = get_player_name(message)
-        if player not in client.stored_values["players"].keys():
+        if player not in client.stored_values["players_obj"].keys():
             await message.channel.send("Jamais entendu de parler de ce gars là")
             return 
     
@@ -344,6 +344,20 @@ async def cmd_pv(message):
         store_players(client)
     await message.channel.send(client.stored_values["players_obj"][player].format_pv())
 
+async def cmd_status(message):
+    """$value - Modifie le status $value (affaibli, en danger ou contraint)"""
+    params = message.content.split()
+    player = get_player_name(message)
+    if len(params) == 0:
+        await message.channel.send(";status [%s]" % ", ".join(status))
+    elif len(params) > 1:
+        new_status = " ".join(params[1:]).capitalize()
+        if new_status not in status:
+            await message.channel.send("Il faut mettre %s" % ", ".join(status))
+            return
+        client.stored_values["players_obj"][player].change_status(new_status)
+        store_players(client)
+    await message.channel.send("Voilà voilà")
 
 commands = {
     ';hello': cmd_hello,
@@ -370,6 +384,7 @@ commands = {
     ';load': cmd_load,
     ';fight': cmd_fight,
     ';pv': cmd_pv,
+    ';status': cmd_status,
 }
 
 

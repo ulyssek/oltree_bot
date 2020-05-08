@@ -26,6 +26,8 @@ jobs = jobs_other + jobs_fight
 weapons = ["Arme","Arme bonus"]
 armor = ["Armure","Bouclier"]
 
+status = ["En danger", "Affaibli", "Contraint"]
+
 def fix_skill(skill):
     """Corrige le skill passé pour pallier aux erreurs de frappe"""
     if type(skill) == str:
@@ -183,11 +185,24 @@ class Player:
                     exalt + bonus_dmg,
                     ", prouesse " + str(prou) if prou < 5 else "")
         return msg, best_score
+    
+    def change_status(self, param):
+        """Change le status"""
+        self.skills[param] = not self.skills[param]
 
     def format_skills(self):
         """Affiche les statistiques"""
         msg = "**Compétences de %s" % self.name + "**"
-        msg += "\n*CA*: %s *Mana*: %s *PV Max*: %s *Vigilance:* %s" % (10+sum(list(map(lambda x : self.skills[x],armor)))+int(self.skills["Guerrier"]/2),self.skills["DV"]*2+self.skills["Érudit"],self.skills["PV Max"],10+self.skills["Voyageur"]+int(self.skills["Assassin"]/2))
+        msg += "\n*CA*: %s *Mana*: %s *PV*: %d/%d *Vigilance:* %s" % (
+                10+sum(list(map(lambda x : self.skills[x],armor)))+int(self.skills["Guerrier"]/2),
+                self.skills["DV"]*2+self.skills["Érudit"],
+                self.skills["PV"],
+                self.skills["PV Max"],
+                10+self.skills["Voyageur"]+int(self.skills["Assassin"]/2)
+                )
+        _ = ", ".join([_ for _ in status if self.skills[_]])
+        if _:
+            msg += "\n*Status*: %s" % _
         msg += "\n**Vocations**\n"
         msg += " ".join(["%s : %s" % ("*"+vocation+"*",self.skills[vocation]) for vocation in vocations])
         msg += "\n**Métiers**\n"
