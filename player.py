@@ -56,7 +56,7 @@ class Player:
             self.skills["PV"] = min(self.skills["PV"] + value, self.skills["PV Max"])
 
     def format_pv(self):
-        return "PV: %d/%d" % (self.skills["PV"], self.skills["PV Max"])
+        return "**PV**: %d/%d" % (self.skills["PV"], self.skills["PV Max"])
 
     def skill_check(self,skill, rolls, ace, params=None):
         """Faire un test de vocation ou métier. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
@@ -187,6 +187,7 @@ class Player:
     def format_skills(self):
         """Affiche les statistiques"""
         msg = "**Compétences de %s" % self.name + "**"
+        msg += "\n%s" % self.format_pv()
         msg += "\n*CA*: %s *Mana*: %s *PV Max*: %s *Vigilance:* %s" % (10+sum(list(map(lambda x : self.skills[x],armor)))+int(self.skills["Guerrier"]/2),self.skills["DV"]*2+self.skills["Érudit"],self.skills["PV Max"],10+self.skills["Voyageur"]+int(self.skills["Assassin"]/2))
         msg += "\n**Vocations**\n"
         msg += " ".join(["%s : %s" % ("*"+vocation+"*",self.skills[vocation]) for vocation in vocations])

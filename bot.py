@@ -296,6 +296,7 @@ async def cmd_drop_hand(message):
     player = get_player_name(message)
 
     client.stored_values["cards"][player] = []
+    store_cards(client)
 
     await message.channel.send("Voilà Voilà")
 
@@ -330,7 +331,7 @@ async def cmd_load(message):
     """Reload tous les fichiers (cartes, joueurs, skills,...) - Commande réservée au MJ"""
     player = get_player_name(message)
     if player != MEUJEU:
-        await message.channel.send("Fais pas le malin mon p'tit gars")
+        await message.channel.send("Ha bah non en fait")
         return
     load(client)
     await message.channel.send("Voilà Voilà")
