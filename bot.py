@@ -180,7 +180,7 @@ async def cmd_patr(message):
             store_cards(client)
         else:
             rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
-            msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
+            msg = """Jet de patrouille de %s : %d (%d+%d)""" % (player,int(np.sum(rolls))+client.stored_values["timeline"]["weather_modif"],int(np.sum(rolls)),client.stored_values["timeline"]["weather_modif"])
             meujeu = await client.fetch_user(MEUJEU_ID)
             await meujeu.send(msg)
 
@@ -296,6 +296,7 @@ async def cmd_drop_hand(message):
     player = get_player_name(message)
 
     client.stored_values["cards"][player] = []
+    store_cards(client)
 
     await message.channel.send("Voilà Voilà")
 
@@ -305,11 +306,24 @@ async def cmd_day(message):
 
 async def cmd_next_day(message):
     """Passe au jour suivant"""
-    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
     client.stored_values["timeline"]["day"] += 1
     client.stored_values["timeline"]["hunger"] += 1
     await message.channel.send(get_date(client.stored_values["timeline"]))
     store_timeline(client)
+
+async def cmd_ellipse(message):
+    """$value - Effectue une ellipse de $value jours."""
+    params = message.content.split()
+    if len(params) > 1:
+        ellipse_days = int(params[1])
+        client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
+        client.stored_values["timeline"]["day"] += ellipse_days
+        store_timeline(client)
+        await message.channel.send(get_date(client.stored_values["timeline"]))
+    else:
+        await message.channel.send("Il manque un argument mon chou")
+
 
 async def cmd_record_event(message):
     """$duration $event - Enregistre un événement $event qui sera réaffiché pendant $duration jours."""
@@ -330,7 +344,7 @@ async def cmd_load(message):
     """Reload tous les fichiers (cartes, joueurs, skills,...) - Commande réservée au MJ"""
     player = get_player_name(message)
     if player != MEUJEU:
-        await message.channel.send("Fais pas le malin mon p'tit gars")
+        await message.channel.send("Ha bah non en fait")
         return
     load(client)
     await message.channel.send("Voilà Voilà")
@@ -359,6 +373,25 @@ async def cmd_status(message):
         store_players(client)
     await message.channel.send("Voilà voilà")
 
+async def cmd_action(message):
+    """$value - Effectue l'action $action et avance le temps"""
+    params = message.content.split()
+
+    if len(params) > 1:
+        msg = take_action(params[1], client)
+        store_timeline(client)
+    else:
+        msg = "Actions possibles:\n"
+        msg += "**action: Description de l'action (temps pris, fatigue)**\n"
+        msg += "\n".join(["%s: %s (%d, %.1f)" % (key, actions[key]["desc"], actions[key]["time"], actions[key]["fatigue"]) for key in actions.keys()])
+    await message.channel.send(msg)
+
+async def cmd_reset_meteo(message):
+    """Reset la météo pour qu'elle corresponde à la saison (à utiliser en cas de déviation trop importante)"""
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
+    store_timeline(client)
+    await message.channel.send(get_date(client.stored_values["timeline"]))
+
 commands = {
     ';hello': cmd_hello,
     ';bagarre': cmd_bagarre,
@@ -385,6 +418,9 @@ commands = {
     ';fight': cmd_fight,
     ';pv': cmd_pv,
     ';status': cmd_status,
+    #';action' : cmd_action,
+    ';ellipse' : cmd_ellipse,
+    ';reset_meteo' : cmd_reset_meteo,
 }
 
 

@@ -58,7 +58,7 @@ class Player:
             self.skills["PV"] = min(self.skills["PV"] + value, self.skills["PV Max"])
 
     def format_pv(self):
-        return "PV: %d/%d" % (self.skills["PV"], self.skills["PV Max"])
+        return "**PV**: %d/%d" % (self.skills["PV"], self.skills["PV Max"])
 
     def skill_check(self,skill, rolls, ace, params=None):
         """Faire un test de vocation ou métier. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
