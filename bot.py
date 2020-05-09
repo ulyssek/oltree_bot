@@ -66,11 +66,11 @@ async def cmd_skills(message,player=None):
         if " " in message.content:
             player = message.content.split()[1]
             if player == "all":
-                for p in client.stored_values["players"].keys():
+                for p in client.stored_values["players_obj"].keys():
                     await cmd_skills(message,p)
         else:
             player = get_player_name(message)
-        if player not in client.stored_values["players"].keys():
+        if player not in client.stored_values["players_obj"].keys():
             await message.channel.send("Jamais entendu de parler de ce gars là")
             return 
     
@@ -180,7 +180,7 @@ async def cmd_patr(message):
             store_cards(client)
         else:
             rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
-            msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
+            msg = """Jet de patrouille de %s : %d (%d+%d)""" % (player,int(np.sum(rolls))+client.stored_values["timeline"]["weather_modif"],int(np.sum(rolls)),client.stored_values["timeline"]["weather_modif"])
             meujeu = await client.fetch_user(MEUJEU_ID)
             await meujeu.send(msg)
 
@@ -312,6 +312,19 @@ async def cmd_next_day(message):
     await message.channel.send(get_date(client.stored_values["timeline"]))
     store_timeline(client)
 
+async def cmd_ellipse(message):
+    """$value - Effectue une ellipse de $value jours."""
+    params = message.content.split()
+    if len(params) > 1:
+        ellipse_days = int(params[1])
+        client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
+        client.stored_values["timeline"]["day"] += ellipse_days
+        store_timeline(client)
+        await message.channel.send(get_date(client.stored_values["timeline"]))
+    else:
+        await message.channel.send("Il manque un argument mon chou")
+
+
 async def cmd_record_event(message):
     """$duration $event - Enregistre un événement $event qui sera réaffiché pendant $duration jours."""
     duration = int(message.content.split()[1])
@@ -348,11 +361,22 @@ async def cmd_pv(message):
 async def cmd_action(message):
     """$value - Effectue l'action $action et avance le temps"""
     params = message.content.split()
-    msg = "Préciser une action"
+
     if len(params) > 1:
         msg = take_action(params[1], client)
         store_timeline(client)
+    else:
+        msg = "Actions possibles:\n"
+        msg += "**action: Description de l'action (temps pris, fatigue)**\n"
+        msg += "\n".join(["%s: %s (%d, %.1f)" % (key, actions[key]["desc"], actions[key]["time"], actions[key]["fatigue"]) for key in actions.keys()])
     await message.channel.send(msg)
+
+async def cmd_reset_meteo(message):
+    """Reset la météo pour qu'elle corresponde à la saison (à utiliser en cas de déviation trop importante)"""
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
+    store_timeline(client)
+    await message.channel.send(get_date(client.stored_values["timeline"]))
+
 
 commands = {
     ';hello': cmd_hello,
@@ -380,6 +404,8 @@ commands = {
     ';fight': cmd_fight,
     ';pv': cmd_pv,
     ';action' : cmd_action,
+    ';ellipse' : cmd_ellipse,
+    ';reset_meteo' : cmd_reset_meteo,
 }
 
 

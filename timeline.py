@@ -54,8 +54,7 @@ hours = [
         ("Après-midi (1/2)", "\"L'après-midi constitue le moment idéal pour faire sa patrouille pour de nombreuses raisons. Ces raisons sont cependant trop nombreuses pour être explicitées ici et vous devrez donc faire confiance à ce que je dis.\"\n\t- *Manuel du patrouilleur, Chapitre XIII: De l'importance de l'après-midi*\n"),
         ("Après-midi (2/2)", "\"L'après-midi constitue le moment idéal pour faire sa patrouille pour de nombreuses raisons. Ces raisons sont cependant trop nombreuses pour être explicitées ici et vous devrez donc faire confiance à ce que je dis.\"\n\t- *Manuel du patrouilleur, Chapitre XIII: De l'importance de l'après-midi*\n"),
         ("Soirée", "\"Il n'y a rien de plus magnique que le soleil couchant sur les plaines vertes d'Ambrasie.\"\n\t- *Manuel du patrouilleur, Chapitre V: Aparté sur les magnifiques terres d'Ambrasie*\n"),
-        ("Soir (1/2)", "\"Le soir de nombreux dangers peuvent guetter le patrouilleur. Donc faites gaffe!\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent sur l'Empire\n"),
-        ("Soir (2/2)", "\"Le soir de nombreux dangers peuvent guetter le patrouilleur. Donc faites gaffe!\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent sur l'Empire\n")
+        ("Soir", "\"Le soir de nombreux dangers peuvent guetter le patrouilleur. Donc faites gaffe!\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent sur l'Empire\n"),
         ]
 
 actions = {
@@ -66,7 +65,7 @@ actions = {
         "move_normal": {"time": 2, "fatigue": 1, "desc": "Le groupe se déplace sur un terrain \"normal\" (plaines, forêt, collinnes)"},
         "move_normal_slow": {"time": 3, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur un terrain \"normal\" (plaines, forêt, collinnes)"},
         "move_hard": {"time": 3, "fatigue": 1, "desc": "Le groupe se déplace sur un terrain difficile (montagne, forêt très dense, marais)"},
-        "move_normal": {"time": 5, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur un terrain \"normal\" (plaines, forêt, collinnes)"},
+        "move_hard_slow": {"time": 5, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur un terrain \"normal\" (plaines, forêt, collinnes)"},
         "move_very_hard" : {"time": 5, "fatigue": 5, "desc": "Le groupe se déplace sur un terrain très difficile (montagne avec de l'escalade, tempête de neige, autre)"},
         "observation" : {"time": 1, "fatigue": 0.5, "desc": "Le groupe cherche un point d'observation."},
         "default" : {"time": 1, "fatigue": 0, "desc": "Le groupe fait une action qui ne nécessite pas d'effort physique (recherches en ville, exploration de donjon, discussion, etc.)"},
@@ -87,6 +86,8 @@ def take_action(action, client):
         client.stored_values["timeline"]["fatigue"] += data["fatigue"]
         if client.stored_values["timeline"]["fatigue"] < 0:
             client.stored_values["timeline"]["fatigue"] = 0
+        if client.stored_values["timeline"]["up"] < -3:
+            client.stored_values["timeline"]["up"] = -3
         return "Fatigue & sommeil: %s (Temps: %d, Fatigue: %d)\n\n%s" % (data["desc"], data["time"], data["fatigue"], get_date(client.stored_values["timeline"]))
     else:
         return "Cette action n'existe pas."
@@ -167,6 +168,10 @@ def get_hunger(date):
         ]
     return faim[hunger]
 
+def reset_meteo(client):
+    season = int(client.stored_values["timeline"]["day"] / (6 * 3 * 5))
+    return roll_meteo(season * 6 + 3)
+
 def roll_meteo(starter):
     if not starter and starter != 0:
         starter = random.randint(0,len(weather))
@@ -179,7 +184,7 @@ def roll_meteo(starter):
     elif res > 5 and res < 8:
         new_weather = starter + random.randint(-4,-1)
     elif res == 8:
-        special = random.choice(0, len(special_weather))
+        special = random.choice(range(0, len(special_weather)))
 
     observation = weather[new_weather][2] and (not special or special_weather[special][2])
 
