@@ -103,8 +103,7 @@ def get_date(date):
     week = int(date["day"] / 6) % 3
     weekday = date["day"] % 6 
 
-    msg = "*%s - Jour %d, %s de %s (%s), %s %d*\n\n" % (
-            hours[date["hours"]][0],
+    msg = "*Jour %d, %s de %s (%s), %s %d*\n\n" % (
             weekday+1,
             weeks[week],
             months[month],
@@ -134,7 +133,7 @@ def get_date(date):
             # Supprimer l'event
             pass 
     msg += get_hunger(date)
-    msg += get_fatigue(date)
+    #msg += get_fatigue(date)
     return msg
 
 def get_fatigue(date):
