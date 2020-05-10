@@ -130,10 +130,14 @@ async def draw_card(message, number, offset):
         return
     
     for i in range(card_number):
-        boule = True
-        while boule:
-            new_card = random.randint(number, offset + number)
-            boule = new_card in all_cards(client.stored_values["cards"])
+        draw = list(range(number, offset + number + 1))
+        for card in all_cards(client.stored_values["cards"]):
+            if card in draw:
+                draw.remove(card)
+        if len(draw) < 5:
+            draw.append(client.stored_values["cards"]["discard"])
+            client.stored_values["cards"]["discard"] = []
+        new_card = random.choice(draw)
         await message.channel.send("Carte tirée : " + str(new_card))
         await send_card(message.channel,new_card)
         sort_cards(client)
@@ -174,13 +178,21 @@ async def cmd_patr(message):
         nb_cards = 1
     for i in range(nb_cards):
         new_card = await draw_card(message, 73, 36)
+        weather_tuple = weather[client.stored_values["timeline"]["weather"]]
+        special = client.stored_values["timeline"]["special"]
+        msg = "Rappel météo: %s" % weather_tuple[1]
+        if special != None:
+            msg +=" - %s" % special_weather[special][1]
+        await message.channel.send(msg)
+
         if new_card >= 97:
             client.stored_values["cards"][player].append(new_card)
             sort_cards(client)
             store_cards(client)
         else:
+            weather_modif = client.stored_values["timeline"]["weather_modif"]
             rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
-            msg = """Jet de patrouille de %s : %d (%d+%d)""" % (player,int(np.sum(rolls))+client.stored_values["timeline"]["weather_modif"],int(np.sum(rolls)),client.stored_values["timeline"]["weather_modif"])
+            msg = """Jet de patrouille de %s : %d (Dés: %d,%d Temps: %d)""" % (player,int(np.sum(rolls))+client.stored_values["timeline"]["weather_modif"] + weather_modif, rolls[0], rolls[1], weather_modif)
             meujeu = await client.fetch_user(MEUJEU_ID)
             await meujeu.send(msg)
 
@@ -211,9 +223,12 @@ async def cmd_play(message):
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
     cards = client.stored_values["cards"][player]
+    discard = client.stored_values["cards"]["discard"]
     try:
         card_index = cards.index(card_number)
         cards.pop(card_index)
+        discard.append(card_number)
+        print(discard)
     except ValueError:
         await message.channel.send("T'as pas la carte mon chou")
         return
@@ -295,6 +310,7 @@ async def cmd_drop_hand(message):
     """Drop la main du joueur"""
     player = get_player_name(message)
 
+    client.stored_values["cards"]["discard"] += client.stored_values["cards"][player]
     client.stored_values["cards"][player] = []
     store_cards(client)
 
