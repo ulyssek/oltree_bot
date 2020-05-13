@@ -1,6 +1,7 @@
 from config import token, players, MEUJEU, MEUJEU_ID,HEX_SIZE
 from toolbox import *
 from timeline import *
+from player import *
 
 import discord
 import numpy as np
@@ -19,29 +20,30 @@ async def cmd_hello(message):
     """Un p'tit coucou"""
     await message.channel.send("Fais pas le malin mon p'tit gars")
 
-
-async def cmd_bagaarre(message):
-    """Lance l'initiative pour tous les joueurs"""
+async def cmd_fight(message):
+    """Commence un combat. L'initiative est lancée et quelques éléments d'information sur les combats sont affichés"""
     jet = "Initiative"
-    client.stored_values["init"] = {}
-    for player in client.stored_values["players"].keys():
-            bonus_touch, bonus_dmg, jet = get_bonus(jet,player)+(jet,)
-            rolls,ace = roll(client,player,jet,explode=True)
-            msg_bagarre,init = format_bagarre(player,jet,rolls,bonus_touch,bonus_dmg)
-            client.stored_values["init"][player] = init
-            await message.channel.send(msg_bagarre)
+    msg_bagarre = "C'EST LA BAGARRE !\n1) Tirer les initiatives\n2) Se battre\n\t;bagarre soldat/guerrier/berzekr/archer\n\t;bagarre soldat $param - param peut être monster (applique les bonus de hache), armed (applique les malus de hache), meteo (applique les malus de meteo)\n3) Fin:\n\t1 point de ressource pour le groupe sinon affaiblis\n\t1 point de ressource par blessé sinon mort\n\tRécupérer points de ressources (si MJ dit OK)\n\n"
+
+    for player_obj in client.stored_values["players_obj"].values():
+        rolls,ace = roll(client,player_obj.name,jet, explode= not player_obj.skills["Affaibli"])
+        _, init = player_obj.skill_check(jet, rolls, ace)
+        msg_bagarre += _
+        player_obj.init = init
+
+    await message.channel.send(msg_bagarre)
 
 async def cmd_bagarre(message):
-    """Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier)"""
+    """$vocation/métier $param - Faire un jet de dé. Il est possible de préciser le type de jet ;bagarre type (soldat, voyageur, érudit, archer, assassin, berzekr, guerrier). On peut aussi passer certains paramètres (monster: attaque contre un monstre, armed: attaque contre des gens armés, meteo: prendre en compte la météo)"""
 
-    bonus_touch, bonus_dmg, jet = parse_bagarre(message) 
     player = get_player_name(message)
+    jet, params = parse_bagarre(message) 
+    player_obj = client.stored_values["players_obj"][player]
 
-    rolls,ace = roll(client,player,jet)
+    rolls,ace = roll(client,player_obj.name,jet)
+    player_obj.rolls, player_obj.ace = rolls, ace
 
-    weapon = client.stored_values["players"][player]["Arme"]
-    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
-    msg_bagarre,_ = format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon, weapon_bonus)
+    msg_bagarre, _ = player_obj.skill_check(jet, rolls, ace, params)
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -52,72 +54,14 @@ def parse_bagarre(message):
     values = message.content.split()
     player = get_player_name(message)
     jet = None
+    params = []
     if len(values) > 1:
         jet = values[1]
+    if len(values) > 2:
+        params = values[2:]
     if type(jet) == str:
         jet = jet.capitalize()
-    return get_bonus(jet, player) + (jet,)
-
-def get_bonus(jet, player):
-    bonus_touch = 0
-    bonus_dmg = 0
-    if jet in classes:
-        if jet in vocations:
-            bonus_touch = client.stored_values["players"][player][jet]
-        else:
-            bonus_touch = client.stored_values["players"][player]["Soldat"]
-            if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
-                bonus_touch += client.stored_values["players"][player]["Berzekr"]
-                bonus_dmg = client.stored_values["players"][player]["Berzekr"]
-                bonus_dmg += client.stored_values["players"][player]["Guerrier"]
-            elif jet in ["Guerrier", "Archer"]:
-                bonus_dmg = client.stored_values["players"][player][jet]
-    elif jet == "Initiative":
-        bonus_touch = client.stored_values["players"][player]["Soldat"]
-    return bonus_touch, bonus_dmg
-
-def format_bagarre(player, jet, rolls, bonus_touch, bonus_dmg, weapon=None, weapon_bonus = 0):
-    rolls_txt = " ".join(map(lambda x : str(int(x)),rolls))
-    mait, prou, exalt = map(lambda x: int(x), rolls)
-    best_score = np.sum(np.sort(np.array((mait,prou,exalt)))[1:3])
-    #Préciser la nature du jet
-    if jet:
-        if jet in vocations:
-            msg = "**Jet de vocation (%s) de %s**\n" % (jet, player)
-        elif jet == "Guerrier":
-            msg = "**Jet de combat (%s) de %s**\n" % (jet, player)
-        elif jet == "Berzekr":
-            msg = "**Jet de combat (%s) de %s**. (Le bonus de guerrier est pris en compte).\n" % (jet, player)
-        elif jet == "Archer":
-            msg = "**Jet de combat (%s) de %s**. Malus pour les tirs à grande distance.\n" %(jet, player) 
-        elif jet == "Initiative":
-            msg = "**Jet d'initiative de %s**\n" % (player)
-        else:
-            msg = "**Jet de machin de %s**. En vrai %s c'est pas parmi les trucs supportés donc va falloir appliquer les bonus à la main ou vérifier que tu aies pas écrit n'importe quoi. Bisous.\n" % (player, jet)
-    else:
-        msg = "Jet standard de %s\n" % player
-    #Préciser l'arme utilisé
-    if weapon:
-        msg += "Arme (les dégâts à appliquer manuellement): %s\n" % weapons_dict[weapon]
-    #Préciser les bonus de l'arme
-    if weapon_bonus:
-        msg += "Bonus arme (à appliquer): + %d dégâts\n" % int(weapon_bonus)
-    msg += "Jet: %s (Bonus touche: %d, Bonus dégâts: %d)\n" % (rolls_txt, bonus_touch, bonus_dmg)
-    #Préciser le résultat du jet (le meilleur est donné dans le cas d'un jet d'initiative
-    if jet == "Initiative":
-        msg += "Inititative de %s : %d\n\n\n" %(player,best_score+bonus_touch)
-    else:
-        msg += "%d (%d dégâts%s) ou %d (%d dégâts%s) ou %d (%d dégâts%s)" % (
-                mait + prou + bonus_touch,
-                mait + bonus_dmg,
-                ", prouesse " + str(prou) if prou < 5 else "",
-                mait + exalt + bonus_touch,
-                mait + bonus_dmg,
-                ", prouesse " + str(exalt) if exalt < 5 else "",
-                exalt + prou + bonus_touch,
-                exalt + bonus_dmg,
-                ", prouesse " + str(prou) if prou < 5 else "")
-    return msg,best_score
+    return jet, params
 
 async def cmd_skills(message,player=None):
     """Affiche les statistiques"""
@@ -125,56 +69,37 @@ async def cmd_skills(message,player=None):
         if " " in message.content:
             player = message.content.split()[1]
             if player == "all":
-                for p in client.stored_values["players"].keys():
+                for p in client.stored_values["players_obj"].keys():
                     await cmd_skills(message,p)
         else:
             player = get_player_name(message)
-        if player not in client.stored_values["players"].keys():
+        if player not in client.stored_values["players_obj"].keys():
             await message.channel.send("Jamais entendu de parler de ce gars là")
             return 
-    player_skills = client.stored_values["players"][player]
-    msg = "**Compétences de %s" % player + "**"
-    msg += "\n*CA*: %s *Mana*: %s *PV Max*: %s *Vigilance:* %s" % (10+sum(list(map(lambda x : player_skills[x],armor)))+int(player_skills["Guerrier"]/2),player_skills["DV"]*2+player_skills["Érudit"],player_skills["PV Max"],10+player_skills["Voyageur"]+int(player_skills["Assassin"]/2))
-    msg += "\n**Vocations**\n"
-    msg += " ".join(["%s : %s" % ("*"+vocation+"*",player_skills[vocation]) for vocation in vocations])
-    msg += "\n**Métiers**\n"
-    msg += " ".join(["%s : %s" % ("*"+job+"*",player_skills[job]) for job in jobs if str(player_skills[job])!='0'])
-    msg += "\n**Armes**\n"
-    temp = ["%s : %s" % ("*"+weapon+"*",player_skills[weapon]) for weapon in weapons if str(player_skills[weapon])!='0']
-    if temp == []:
-        msg += "Nada"
-    else:
-        msg += " ".join(temp)
-    msg += "\n**Armures**\n"
-    temp = ["%s : %s" % ("*"+armor+"*",player_skills[armor]) for armor in armor if str(player_skills[armor])!='0']
-    if temp == []:
-        msg += "Nada"
-    else:
-        msg += " ".join(temp)
+    
+    player_obj = client.stored_values["players_obj"][player]
+    msg = player_obj.format_skills()
     await message.channel.send(msg)
-
 
 async def cmd_explode(message):
     """Relance les dés qui ont explosé au précédent jet du joueur"""
     player = get_player_name(message)
+    player_obj = client.stored_values["players_obj"][player]
     dice_value = client.stored_values["dice_value"]
-    jet = None
-    if player in client.stored_values["ace"].keys():
-        jet = client.stored_values["jets"][player]
-        ace = client.stored_values["ace"][player]
-    else:
-        ace = [0]
+    jet = player_obj.jet
+    ace = player_obj.ace
+    stored_dices = player_obj.rolls
+    params = player_obj.params
     if sum(ace) == 0:
         await message.channel.send("Fais pas le malin mon p'tit gars")
         return
-    bonus_touch, bonus_dmg = get_bonus(jet, player)
-    stored_dices = client.stored_values["dices"][player]
+
     exploding_dices = roll_n_dices(sum(ace),dice_value,False)
     stored_dices[ace] += exploding_dices
     ace[ace] &= (exploding_dices == dice_value)
-    weapon = client.stored_values["players"][player]["Arme"]
-    weapon_bonus = client.stored_values["players"][player]["Arme bonus"]
-    msg_bagarre,_ = format_bagarre(player, jet, stored_dices, bonus_touch, bonus_dmg, weapon, weapon_bonus)
+
+    msg_bagarre,_ = player_obj.skill_check(jet, stored_dices, ace, params)
+
     await message.channel.send(msg_bagarre)
     for i in range(sum(ace)):
         with open('images/boum.jpg', 'rb') as fp:
@@ -208,10 +133,14 @@ async def draw_card(message, number, offset):
         return
     
     for i in range(card_number):
-        boule = True
-        while boule:
-            new_card = random.randint(number, offset + number)
-            boule = new_card in all_cards(client.stored_values["cards"])
+        draw = list(range(number, offset + number + 1))
+        for card in all_cards(client.stored_values["cards"]):
+            if card in draw:
+                draw.remove(card)
+        if len(draw) < 5:
+            draw.append(client.stored_values["cards"]["discard"])
+            client.stored_values["cards"]["discard"] = []
+        new_card = random.choice(draw)
         await message.channel.send("Carte tirée : " + str(new_card))
         await send_card(message.channel,new_card)
         sort_cards(client)
@@ -252,13 +181,21 @@ async def cmd_patr(message):
         nb_cards = 1
     for i in range(nb_cards):
         new_card = await draw_card(message, 73, 36)
+        weather_tuple = weather[client.stored_values["timeline"]["weather"]]
+        special = client.stored_values["timeline"]["special"]
+        msg = "Rappel météo: %s" % weather_tuple[1]
+        if special != None:
+            msg +=" - %s" % special_weather[special][1]
+        await message.channel.send(msg)
+
         if new_card >= 97:
             client.stored_values["cards"][player].append(new_card)
             sort_cards(client)
             store_cards(client)
         else:
+            weather_modif = client.stored_values["timeline"]["weather_modif"]
             rolls,ace = roll(client,MEUJEU,"patrouille",8,2,True)
-            msg = """Jet de patrouille de %s : %s""" % (player,int(np.sum(rolls)))
+            msg = """Jet de patrouille de %s : %d (Dés: %d,%d Temps: %d)""" % (player,int(np.sum(rolls))+client.stored_values["timeline"]["weather_modif"] + weather_modif, rolls[0], rolls[1], weather_modif)
             meujeu = await client.fetch_user(MEUJEU_ID)
             await meujeu.send(msg)
 
@@ -289,9 +226,12 @@ async def cmd_play(message):
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
     cards = client.stored_values["cards"][player]
+    discard = client.stored_values["cards"]["discard"]
     try:
         card_index = cards.index(card_number)
         cards.pop(card_index)
+        discard.append(card_number)
+        print(discard)
     except ValueError:
         await message.channel.send("T'as pas la carte mon chou")
         return
@@ -373,7 +313,9 @@ async def cmd_drop_hand(message):
     """Drop la main du joueur"""
     player = get_player_name(message)
 
+    client.stored_values["cards"]["discard"] += client.stored_values["cards"][player]
     client.stored_values["cards"][player] = []
+    store_cards(client)
 
     await message.channel.send("Voilà Voilà")
 
@@ -383,11 +325,24 @@ async def cmd_day(message):
 
 async def cmd_next_day(message):
     """Passe au jour suivant"""
-    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
     client.stored_values["timeline"]["day"] += 1
     client.stored_values["timeline"]["hunger"] += 1
     await message.channel.send(get_date(client.stored_values["timeline"]))
     store_timeline(client)
+
+async def cmd_ellipse(message):
+    """$value - Effectue une ellipse de $value jours."""
+    params = message.content.split()
+    if len(params) > 1:
+        ellipse_days = int(params[1])
+        client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
+        client.stored_values["timeline"]["day"] += ellipse_days
+        store_timeline(client)
+        await message.channel.send(get_date(client.stored_values["timeline"]))
+    else:
+        await message.channel.send("Il manque un argument mon chou")
+
 
 async def cmd_record_event(message):
     """$duration $event - Enregistre un événement $event qui sera réaffiché pendant $duration jours."""
@@ -404,16 +359,57 @@ async def cmd_eat(message):
     store_timeline(client)
     await message.channel.send("Le groupe a mangé.\n\n\"*Il est nécessaire de s'alimenter régulièrement sinon c'est la mort assurée !*\"\n\t- *Manuel du patrouilleur, Chapitre IX: Comment ne pas mourir lors de sa première patrouille*\n")
 
-
 async def cmd_load(message):
     """Reload tous les fichiers (cartes, joueurs, skills,...) - Commande réservée au MJ"""
     player = get_player_name(message)
     if player != MEUJEU:
-        await message.channel.send("Fais pas le malin mon p'tit gars")
+        await message.channel.send("Ha bah non en fait")
         return
     load(client)
     await message.channel.send("Voilà Voilà")
 
+async def cmd_pv(message):
+    """$value - Modifie les PV de $value. Affiche les PV si pas de $value"""
+    params = message.content.split()
+    player = get_player_name(message)
+    if len(params) > 1:
+        client.stored_values["players_obj"][player].change_pv(int(params[1]))
+        store_players(client)
+    await message.channel.send(client.stored_values["players_obj"][player].format_pv())
+
+async def cmd_status(message):
+    """$value - Modifie le status $value (affaibli, en danger ou contraint)"""
+    params = message.content.split()
+    player = get_player_name(message)
+    if len(params) == 0:
+        await message.channel.send(";status [%s]" % ", ".join(status))
+    elif len(params) > 1:
+        new_status = " ".join(params[1:]).capitalize()
+        if new_status not in status:
+            await message.channel.send("Il faut mettre %s" % ", ".join(status))
+            return
+        client.stored_values["players_obj"][player].change_status(new_status)
+        store_players(client)
+    await message.channel.send("Voilà voilà")
+
+async def cmd_action(message):
+    """$value - Effectue l'action $action et avance le temps"""
+    params = message.content.split()
+
+    if len(params) > 1:
+        msg = take_action(params[1], client)
+        store_timeline(client)
+    else:
+        msg = "Actions possibles:\n"
+        msg += "**action: Description de l'action (temps pris, fatigue)**\n"
+        msg += "\n".join(["%s: %s (%d, %.1f)" % (key, actions[key]["desc"], actions[key]["time"], actions[key]["fatigue"]) for key in actions.keys()])
+    await message.channel.send(msg)
+
+async def cmd_reset_meteo(message):
+    """Reset la météo pour qu'elle corresponde à la saison (à utiliser en cas de déviation trop importante)"""
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
+    store_timeline(client)
+    await message.channel.send(get_date(client.stored_values["timeline"]))
 
 async def cmd_map(message):
     """Affiche la carte du monde""" 
@@ -529,42 +525,27 @@ commands = {
     ';record_event': cmd_record_event,
     ';eat': cmd_eat,
     ';load': cmd_load,
-    ';bagaarre': cmd_bagaarre,
     ';map' : cmd_map,
     ';move' : cmd_move,
     ';en_avant' : cmd_en_avant,
+    ';fight': cmd_fight,
+    ';pv': cmd_pv,
+    ';status': cmd_status,
+    #';action' : cmd_action,
+    ';ellipse' : cmd_ellipse,
+    ';reset_meteo' : cmd_reset_meteo,
 }
 
-weapons_dict = {
-        "1h_sword": "Epée",
-        "2h_sword": "Epée à deux mains (+2 dégâts)",
-        "1h_axe": "Hache (-1 à l'attaque contre combattants armés, +2 dégâts contre monstres",
-        "2h_axe": "Hache à deux mains (-1 à l'attaque contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
-        "longbow": "Arc long",
-        "shortbow": "Arc court",
-        "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
-        "dagger": "Dague (-2 CA contre adversaires avec arme plus longue, pas de malus en milieu confiné)",
-        }
 
 client = discord.Client()
-
-classes =  ["Soldat", "Voyageur", "Érudit", "Archer", "Assassin", "Berzekr", "Guerrier"]
-
 client.stored_values = {
         "dice_value" : 8,
         "ace":{},
         "dices":{},
         "jets":{},
+        "players": {},
         }
-
-vocations = ["Soldat","Voyageur","Érudit"]
-jobs = ["Archer","Assassin","Berzekr","Guerrier","Druide","Maître des bêtes"]
-weapons = ["Arme","Arme bonus"]
-armor = ["Armure","Bouclier"]
-
-
 load(client)
-
 
 @client.event
 async def on_ready():

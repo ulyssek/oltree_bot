@@ -2,6 +2,7 @@ import numpy as np
 import random
 import json
 import discord
+from player import Player
 
 
 
@@ -32,9 +33,8 @@ def roll(client,player,jet,dice_value=None,dice_number=3,explode=False):
     if dice_value is None:
         dice_value = client.stored_values["dice_value"]
     rolls = roll_n_dices(dice_number,dice_value,explode)
-    client.stored_values["jets"][player] = jet
-    client.stored_values["dices"][player] = rolls
-    ace = client.stored_values["ace"][player] = (rolls == dice_value)
+
+    ace = (rolls == dice_value)
     return rolls,ace
 
 def get_sum(rolls):
@@ -70,15 +70,24 @@ def store_timeline(client):
     with open(timeline_json, 'w') as fp:
         json.dump(cards, fp)
 
+def store_players(client):
+    players = {}
+    for key, value in client.stored_values["players_obj"].items():
+        players[key] = value.skills
+    with open(players_json, 'w') as fp:
+        json.dump(players, fp, sort_keys=True, indent=4)
+
 def load(client):
     with open(file_name) as json_file:
         client.stored_values["cards"] = json.load(json_file)
 
-    with open(players_json) as json_file:
-        client.stored_values["players"] = json.load(json_file)
-
-    with open("timeline.json") as json_file:
+    with open(timeline_json) as json_file:
         client.stored_values["timeline"] = json.load(json_file)
+
+    with open(players_json) as json_file:
+        client.stored_values["players_obj"] = {}
+        for name, skills in json.load(json_file).items():
+            client.stored_values["players_obj"][name] = Player(name, skills, client.stored_values["timeline"])
 
 def build_hexagon(origin,size):
     a,b  = origin
@@ -118,4 +127,3 @@ def load_map():
 
 def store_map(mapp):
     np.save(map_name,mapp)
-
