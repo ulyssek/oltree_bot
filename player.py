@@ -15,6 +15,12 @@ weapons_distance = {
         "shortbow": "Arc court",
         }
 
+prouesse= [
+        ("Effet temporaire sur ennemi (en danger, affaiblir, à terre, contraint), il peut faire un jet de sauvegarde OU annuler un effet sur un allié.", "Influencer fortement l’attitude des figurants présents, inventer un élément du décor qui change la situation de manière importante."),
+        ("Bonus +1d8 au dé de maîtrise. Saisir un adversaire plus grand.", "Énoncer un fait qui se vérifie (à la discrétion du meneur de jeu qui peut le modifier légèrement pour coller à l’histoire), jouer une carte d’exaltation au nom d’un allié."),
+        ("Changer conditions générales (désarmer adversaire, trouver un abri, gagner un bonus de +2 à CA/classe d'armure). Avantage dure jusqu'à la fin de la scène.", "Ajouter un élément pertinent au décor ou à l'histoire"),
+        ("Bonus de +2 à un jet futur (soi ou allié). Saisir un adversaire de sa taille","Ajouter un élément mineur au décor ou influence légèrement l'attitude générale")]
+
 weapons = dict(weapons_close)
 weapons.update(weapons_distance)
 
