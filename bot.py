@@ -1,4 +1,4 @@
-from config import token, players, MEUJEU, MEUJEU_ID
+from config import token, players, MEUJEU, MEUJEU_ID,HEX_SIZE
 from toolbox import *
 from timeline import *
 
@@ -8,6 +8,9 @@ import random
 import json
 import pprint
 from time import sleep
+from PIL import Image, ImageDraw
+import os
+
 
 file_name = "cards.json"
 players_json = "players.json"
@@ -412,6 +415,97 @@ async def cmd_load(message):
     await message.channel.send("Voilà Voilà")
 
 
+async def cmd_map(message):
+    """Affiche la carte du monde""" 
+
+    colors = [
+        (255, 0, 0, 75),
+        (255, 255, 0, 75),
+        (255, 0, 255, 75),
+        (0, 0, 255, 75),
+        (0, 225, 255, 75),
+        (0, 255, 0, 75),
+    ]
+
+    mapp = load_map()
+
+    #im = Image.open("carte_hexagon.png")
+    im = Image.open("images/world_map.png")
+    im = im.convert('RGB')
+
+    draw = ImageDraw.Draw(im,"RGBA")
+
+    for i, j in np.ndindex(mapp.shape):
+        if mapp[i,j]:
+            draw_hex(draw,i,j,HEX_SIZE,colors[int(mapp[i,j])-1])
+
+
+    position_str = client.stored_values["timeline"]["position"]
+    position = tuple(map(int,position_str.split(",")))
+
+    draw_position(draw,*position,HEX_SIZE)
+    im.save("temp_map.png")
+    with open("temp_map.png","rb") as fp:
+        f = discord.File(fp)
+        await message.channel.send(file=f)
+    os.remove("temp_map.png")
+
+
+async def cmd_move(message):
+    """$x,$y : Déplace le groupe sur la case indiquée"""
+    content = message.content
+    if len(content.split(" ")) == 1:
+        await message.channel.send("Mon loulou, si tu me dis pas où tu veux aller, je vais pas pouvoir t'y emmener")
+        return
+    try:
+        position_str = content.split(" ")[1]
+        x,y = tuple(map(int,position_str.split(",")))
+    except:
+        await message.channel.send("J'ai rien compris...")
+        return
+    client.stored_values["timeline"]["position"]  = position_str
+    await message.channel.send("Voilà Voilà")
+
+
+async def cmd_en_avant(message):
+    """Tu vois ce que je veux dire"""
+    content = message.content
+    if len(content.split(" ")) == 1:
+        await message.channel.send("Mon loulou, si tu me dis pas où tu veux aller, je vais pas pouvoir t'y emmener")
+        return
+    try:
+        position_str = content.split(" ")[1]
+        x,y = tuple(map(int,position_str.split(",")))
+    except:
+        await message.channel.send("J'ai rien compris...")
+        return
+
+    position_str = client.stored_values["timeline"]["position"]
+    cx,cy = tuple(map(int,position_str.split(",")))
+
+    boule = False
+    #Test if motion is an hexagon wide
+    boule = boule or (abs(cx-x) > 1 or abs(cy-y) > 1)
+    #Test if x is odd
+    boule = boule or (cx != x and cx & 1 and y == cy+1)
+    #Test if x is even
+    boule = boule or (cx != x and not(cx & 1) and y == cy-1)
+    #Boule is True if the move is invalid
+    if boule:
+        await message.channel.send("Dans la vie jeune patrouilleur, on avance un pas après l'autre") 
+        return
+
+    client.stored_values["timeline"]["position"] = str(x)+","+str(y)
+    mapp = load_map()
+    mapp[x,y] += 1
+    mapp = np.clip(mapp,0,6)
+    store_map(mapp)
+    await cmd_map(message)
+    message.content = ""
+    await cmd_patr(message)
+
+
+
 commands = {
     ';hello': cmd_hello,
     ';bagarre': cmd_bagarre,
@@ -436,6 +530,9 @@ commands = {
     ';eat': cmd_eat,
     ';load': cmd_load,
     ';bagaarre': cmd_bagaarre,
+    ';map' : cmd_map,
+    ';move' : cmd_move,
+    ';en_avant' : cmd_en_avant,
 }
 
 weapons_dict = {

@@ -8,6 +8,7 @@ import discord
 file_name = "cards.json"
 players_json = "players.json"
 timeline_json = "timeline.json"
+map_name = "map.npy"
 
 
 def get_randint(bound):
@@ -78,4 +79,43 @@ def load(client):
 
     with open("timeline.json") as json_file:
         client.stored_values["timeline"] = json.load(json_file)
+
+def build_hexagon(origin,size):
+    a,b  = origin
+    c = size
+    h = c*np.sqrt(3)/2
+    g = c/2
+    return ((a,b),(a+c,b),(a+c+g,b+h),(a+c,b+2*h),(a,b+2*h),(a-g,b+h))
+
+def coordinate(x,y,size):
+    c = size
+    ga = c*2
+    h = c*np.sqrt(3)/2
+    alpha = (c+ga)/2
+    beta = 110-3*(c+ga)/2
+    alpha_y = 2*h
+    beta_y = 100-6*h
+    if not int(x/2)*2 == x:
+        return alpha*x+beta,alpha_y*y+beta_y
+    else:
+        return alpha*x+beta,alpha_y*y+beta_y+h
+
+def hex_coordinates(i,j,hex_size):
+    x,y = coordinate(i,j,hex_size)
+    poly = build_hexagon((x,y),hex_size)
+    return poly
+    
+def draw_hex(draw,i,j,hex_size,color):
+    poly = hex_coordinates(i,j,hex_size)
+    draw.polygon(poly, color)
+
+def draw_position(draw,x,y,hex_size):
+    pos = hex_coordinates(x,y,hex_size)
+    draw.line(pos, fill="red", width=7)
+
+def load_map():
+    return np.load(map_name)
+
+def store_map(mapp):
+    np.save(map_name,mapp)
 
