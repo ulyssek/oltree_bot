@@ -43,54 +43,15 @@ special_weather = [
         ]
 
 hours = [
-        ("Nuit (1/3)", "\"Il est recommandé de dormir la nuit car la fatigue est un des pires ennemis du patrouilleur. Seules les liches, géants de feu, brigands, gobelins, gnolls, orcs des prairies de sable, agents du roi sorcier sont pires que la fatigue.\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent dans l'Empire*\n"),
-        ("Nuit (2/3)", "\"Il est recommandé de dormir la nuit car la fatigue est un des pires ennemis du patrouilleur. Seules les liches, géants de feu, brigands, gobelins, gnolls, orcs des prairies de sable, agents du roi sorcier sont pires que la fatigue.\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent dans l'Empire*\n"),
-        ("Nuit (3/3)",  "\"Il est recommandé de dormir la nuit car la fatigue est un des pires ennemis du patrouilleur. Seules les liches, géants de feu, brigands, gobelins, gnolls, orcs des prairies de sable, agents du roi sorcier sont pires que la fatigue.\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent dans l'Empire*\n"),
+        ("Nuit (1/2)", "\"Il est recommandé de dormir la nuit car la fatigue est un des pires ennemis du patrouilleur. Seules les liches, géants de feu, brigands, gobelins, gnolls, orcs des prairies de sable, agents du roi sorcier sont pires que la fatigue.\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent dans l'Empire*\n"),
+        ("Nuit (2/2)", "\"Il est recommandé de dormir la nuit car la fatigue est un des pires ennemis du patrouilleur. Seules les liches, géants de feu, brigands, gobelins, gnolls, orcs des prairies de sable, agents du roi sorcier sont pires que la fatigue.\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent dans l'Empire*\n"),
         ("Aube", "\"Le lever du soleil est le meilleur moment pour effectuer sa prière quotidienne.\"\n\t- *Manuel du patrouilleur, Chapitre II: Comment les dieux peuvent vous sauver*\n"),
-        ("Matinée (1/2)", "\"Traditionnellement la matinée est consacrée à l'entrainement physique et intellectuel.\"\n\t- *Manuel du patrouilleur, Chapitre IV: Que faire quand on est un patrouilleur*\n"),
-        ("Matinée (2/2)", "\"Traditionnellement la matinée est consacrée à l'entrainement physique et intellectuel.\"\n\t- *Manuel du patrouilleur, Chapitre IV: Que faire quand on est un patrouilleur*\n"),
-        ("Matinée (2/2)", "\"Traditionnellement la matinée est consacrée à l'entrainement physique et intellectuel.\"\n\t- *Manuel du patrouilleur, Chapitre IV: Que faire quand on est un patrouilleur*\n"),
+        ("Matinée", "\"Traditionnellement la matinée est consacrée à l'entrainement physique et intellectuel.\"\n\t- *Manuel du patrouilleur, Chapitre IV: Que faire quand on est un patrouilleur*\n"),
         ("Midi", "\"Le milieu de la journée est appelé midi.\"\n\t- *Manuel du patrouilleur, Chapitre XIX: Midi*\n"),
-        ("Après-midi (1/2)", "\"L'après-midi constitue le moment idéal pour faire sa patrouille pour de nombreuses raisons. Ces raisons sont cependant trop nombreuses pour être explicitées ici et vous devrez donc faire confiance à ce que je dis.\"\n\t- *Manuel du patrouilleur, Chapitre XIII: De l'importance de l'après-midi*\n"),
-        ("Après-midi (2/2)", "\"L'après-midi constitue le moment idéal pour faire sa patrouille pour de nombreuses raisons. Ces raisons sont cependant trop nombreuses pour être explicitées ici et vous devrez donc faire confiance à ce que je dis.\"\n\t- *Manuel du patrouilleur, Chapitre XIII: De l'importance de l'après-midi*\n"),
+        ("Après-midi", "\"L'après-midi constitue le moment idéal pour faire sa patrouille pour de nombreuses raisons. Ces raisons sont cependant trop nombreuses pour être explicitées ici et vous devrez donc faire confiance à ce que je dis.\"\n\t- *Manuel du patrouilleur, Chapitre XIII: De l'importance de l'après-midi*\n"),
         ("Soirée", "\"Il n'y a rien de plus magnique que le soleil couchant sur les plaines vertes d'Ambrasie.\"\n\t- *Manuel du patrouilleur, Chapitre V: Aparté sur les magnifiques terres d'Ambrasie*\n"),
         ("Soir", "\"Le soir de nombreux dangers peuvent guetter le patrouilleur. Donc faites gaffe!\"\n\t- *Manuel du patrouilleur, Chapitre VI: Les menaces qui rodent sur l'Empire\n"),
         ]
-
-actions = {
-        "sleep": {"time" : 1, "fatigue": -2, "desc": "Le groupe dort."},
-        "hunt": {"time": 1, "fatigue": 0.5, "desc": "Le groupe chasse (2 cartes de patrouille, 1d8 RU utiles, sécurise de 1)"},
-        "move_road": {"time": 1, "fatigue": 1, "desc": "Le groupe se déplace sur une route"},
-        "move_road_slow": {"time": 2, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur une route"}, 
-        "move_normal": {"time": 2, "fatigue": 1, "desc": "Le groupe se déplace sur un terrain \"normal\" (plaines, forêt, collinnes)"},
-        "move_normal_slow": {"time": 3, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur un terrain \"normal\" (plaines, forêt, collinnes)"},
-        "move_hard": {"time": 3, "fatigue": 1, "desc": "Le groupe se déplace sur un terrain difficile (montagne, forêt très dense, marais)"},
-        "move_hard_slow": {"time": 5, "fatigue": 1, "desc": "Le groupe se déplace **prudemment** sur un terrain \"normal\" (plaines, forêt, collinnes)"},
-        "move_very_hard" : {"time": 5, "fatigue": 5, "desc": "Le groupe se déplace sur un terrain très difficile (montagne avec de l'escalade, tempête de neige, autre)"},
-        "observation" : {"time": 1, "fatigue": 0.5, "desc": "Le groupe cherche un point d'observation."},
-        "default" : {"time": 1, "fatigue": 0, "desc": "Le groupe fait une action qui ne nécessite pas d'effort physique (recherches en ville, exploration de donjon, discussion, etc.)"},
-        }
-
-def take_action(action, client):
-
-    if action == "sleep":
-        client.stored_values["timeline"]["up"] -= 3
-
-    if action in actions.keys():
-        data = actions[action]
-        next_hour = client.stored_values["timeline"]["hours"] + data["time"]
-        if (next_hour / 12) >= 1:
-            next_day(client)
-        client.stored_values["timeline"]["hours"] = (client.stored_values["timeline"]["hours"] + data["time"]) % 12
-        client.stored_values["timeline"]["up"] += data["time"]
-        client.stored_values["timeline"]["fatigue"] += data["fatigue"]
-        if client.stored_values["timeline"]["fatigue"] < 0:
-            client.stored_values["timeline"]["fatigue"] = 0
-        if client.stored_values["timeline"]["up"] < -3:
-            client.stored_values["timeline"]["up"] = -3
-        return "Fatigue & sommeil: %s (Temps: %d, Fatigue: %d)\n\n%s" % (data["desc"], data["time"], data["fatigue"], get_date(client.stored_values["timeline"]))
-    else:
-        return "Cette action n'existe pas."
 
 def next_day(client):
     client.stored_values["timeline"]["day"] += 1
@@ -133,26 +94,6 @@ def get_date(date):
             # Supprimer l'event
             pass 
     msg += get_hunger(date)
-    #msg += get_fatigue(date)
-    return msg
-
-def get_fatigue(date):
-    fatigue = date["fatigue"]
-    sleepiness = date["up"] - 3
-    state = int(max(fatigue, sleepiness))
-    etats = [
-            "En pleine forme",
-            "Tout va bien",
-            "Tout va bien",
-            "Un peu fatigué mais ça va aller",
-            "Vivement qu'on s'arrête",
-            "Bon on va s'arrêter ?",
-            "Le groupe est épuisé (Nécessite 1 RU de plus)",
-            "Le groupe n'en peut plus (Nécessite 1 RU de plus, tout le monde est affaibli, les blessés ne peuvent plus avancer)"
-            ]
-    if state > 7:
-        state = 7
-    msg = "%s (Efforts: %.1f, Sommeil: %.1f)" % (etats[state], fatigue, sleepiness)
     return msg
 
 def get_hunger(date):
