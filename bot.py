@@ -505,6 +505,12 @@ async def cmd_en_avant(message):
     await cmd_patr(message)
 
 
+async def cmd_legend(message):
+    """Légende de la carte"""
+
+    with open("images/legend.png","rb") as fp:
+        f = discord.File(fp)
+        await message.channel.send(file=f)
 
 commands = {
     ';hello': cmd_hello,
@@ -533,6 +539,7 @@ commands = {
     ';map' : cmd_map,
     ';move' : cmd_move,
     ';en_avant' : cmd_en_avant,
+    ';legend' : cmd_legend,
 }
 
 weapons_dict = {
