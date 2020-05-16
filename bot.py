@@ -392,19 +392,6 @@ async def cmd_status(message):
         store_players(client)
     await message.channel.send("Voilà voilà")
 
-async def cmd_action(message):
-    """$value - Effectue l'action $action et avance le temps"""
-    params = message.content.split()
-
-    if len(params) > 1:
-        msg = take_action(params[1], client)
-        store_timeline(client)
-    else:
-        msg = "Actions possibles:\n"
-        msg += "**action: Description de l'action (temps pris, fatigue)**\n"
-        msg += "\n".join(["%s: %s (%d, %.1f)" % (key, actions[key]["desc"], actions[key]["time"], actions[key]["fatigue"]) for key in actions.keys()])
-    await message.channel.send(msg)
-
 async def cmd_reset_meteo(message):
     """Reset la météo pour qu'elle corresponde à la saison (à utiliser en cas de déviation trop importante)"""
     client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
@@ -500,6 +487,15 @@ async def cmd_en_avant(message):
     message.content = ""
     await cmd_patr(message)
 
+def cmd_rules(message):
+    """$value - Affiche des informations sur les règles."""
+    rules = ["prouesse"]
+    params = message.content.split()
+    msg = ""
+    if len(params) > 1 and params[1] in rules:
+        if params[1] == "prouesse":
+            msg = "Règles de prouesse\n"
+            msg +="\n".join(["%d - %s" % (i, prouesse[i][0]) for i in range(4)])
 
 async def cmd_legend(message):
     """Légende de la carte"""
@@ -537,10 +533,10 @@ commands = {
     ';fight': cmd_fight,
     ';pv': cmd_pv,
     ';status': cmd_status,
-    #';action' : cmd_action,
     ';ellipse' : cmd_ellipse,
     ';reset_meteo' : cmd_reset_meteo,
     ';legend' : cmd_legend,
+    ';rules' : cmd_rules,
 }
 
 
