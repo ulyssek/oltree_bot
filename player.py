@@ -100,9 +100,11 @@ class Player:
         # Jet d'archer et arme est un arc
         if jet == "Archer" and self.skills["Arme"] in weapons_distance.keys():
             bonus_dmg += self.skills["Arme bonus"]
+            bonus_touch += self.skills["Arme bonus"]
         # Jet de guerrier ou berzekr et arme est une arme de cac
         elif jet in ["Berzekr", "Guerrier"] and self.skills["Arme"] in weapons_close.keys():
             bonus_dmg += self.skills["Arme bonus"]
+            bonus_touch += self.skills["Arme bonus"]
             if "2h" in self.skills["Arme"]:
                 bonus_dmg += 2
             if "axe" in self.skills["Arme"]:
@@ -115,7 +117,7 @@ class Player:
 
     def get_bonus_weather(self, jet):
         if jet in ["Archer"] and "meteo" in self.params:
-            return 0, -self.timeline["weather_modif"]
+            return -self.timeline["weather_modif"], -self.timeline["weather_modif"]
         else:
             return 0, 0
 
@@ -140,7 +142,7 @@ class Player:
                 msg += "Arme (à appliquer): %s\n" % weapons_dict[weapon]
             # Si l'arme a des bonus
             if weapon_bonus:
-                msg += "Bonus arme (déjà appliqué): + %d dégâts\n" % int(weapon_bonus)
+                msg += "Bonus arme (déjà appliqué): + %d\n" % int(weapon_bonus)
 
         return msg
 
