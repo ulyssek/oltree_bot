@@ -325,7 +325,7 @@ async def cmd_day(message):
 
 async def cmd_next_day(message):
     """Passe au jour suivant"""
-    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["timeline"]["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
     client.stored_values["timeline"]["day"] += 1
     client.stored_values["timeline"]["hunger"] += 1
     await message.channel.send(get_date(client.stored_values["timeline"]))
@@ -336,7 +336,7 @@ async def cmd_ellipse(message):
     params = message.content.split()
     if len(params) > 1:
         ellipse_days = int(params[1])
-        client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
+        client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["timeline"]["special"], client.stored_values["timeline"]["observation"] = roll_meteo(client.stored_values["timeline"]["weather"])
         client.stored_values["timeline"]["day"] += ellipse_days
         store_timeline(client)
         await message.channel.send(get_date(client.stored_values["timeline"]))
