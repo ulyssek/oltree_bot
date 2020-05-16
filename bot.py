@@ -394,7 +394,7 @@ async def cmd_status(message):
 
 async def cmd_reset_meteo(message):
     """Reset la météo pour qu'elle corresponde à la saison (à utiliser en cas de déviation trop importante)"""
-    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
+    client.stored_values["timeline"]["weather"], client.stored_values["timeline"]["weather_modif"], client.stored_values["timeline"]["special"], client.stored_values["timeline"]["observation"] = reset_meteo(client)
     store_timeline(client)
     await message.channel.send(get_date(client.stored_values["timeline"]))
 
