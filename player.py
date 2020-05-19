@@ -38,7 +38,10 @@ weapons_dict = {
 vocations = ["Soldat","Voyageur","Érudit"]
 jobs_other = ["Druide","Maître des bêtes","Marchand","Noble","R\u00f4deur"]
 jobs_fight = ["Archer", "Assassin", "Berzekr", "Guerrier"]
-sauvegarde = ["Réflexe","Vigueur","Volonté"]
+sauvegarde = {
+        "Réflexe":"Voyageur",
+        "Vigueur":"Soldat",
+        "Volonté":"Érudit"}
 jobs = jobs_other + jobs_fight
 
 weapons = ["Arme","Arme bonus"]
@@ -90,19 +93,20 @@ class Player:
     def get_bonus_skills(self, jet):
         bonus_touch = 0
         bonus_dmg = 0
-        if jet in vocations + jobs:
-            if jet in vocations:
-                bonus_touch = self.skills[jet]
-            else:
-                bonus_touch = self.skills["Soldat"]
-                if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
-                    bonus_touch += self.skills["Berzekr"]
-                    bonus_dmg = self.skills["Berzekr"]
-                    bonus_dmg += self.skills["Guerrier"]
-                elif jet == "Guerrier":
-                    bonus_dmg = self.skills[jet]
-                elif jet == "Archer":
-                    bonus_dmg = self.skills[jet]
+        if jet in vocations:
+            bonus_touch = self.skills[jet]
+        elif jet in list(sauvegarde.keys()):
+            bonus_touch = self.skills[sauvegarde[jet]]
+        elif jet in jobs_fight:
+            bonus_touch = self.skills["Soldat"]
+            if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
+                bonus_touch += self.skills["Berzekr"]
+                bonus_dmg = self.skills["Berzekr"]
+                bonus_dmg += self.skills["Guerrier"]
+            elif jet == "Guerrier":
+                bonus_dmg = self.skills[jet]
+            elif jet == "Archer":
+                bonus_dmg = self.skills[jet]
         elif jet == "Initiative":
             bonus_touch = self.skills["Soldat"]
         return bonus_touch, bonus_dmg
@@ -175,6 +179,8 @@ class Player:
         if jet:
             if jet in vocations:
                 msg = "**Jet de vocation (%s) de %s**\n" % (jet, self.name)
+            elif jet in sauvegarde.keys():
+                msg = "**Jet de sauvegarde (%s) de %s**\n" % (jet, self.name)
             elif jet == "Guerrier":
                 msg = "**Jet de combat (%s) de %s**\n" % (jet, self.name)
             elif jet == "Berzekr":
