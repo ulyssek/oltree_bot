@@ -36,8 +36,20 @@ weapons_dict = {
         }
 
 vocations = ["Soldat","Voyageur","Érudit"]
-jobs_other = ["Druide","Maître des bêtes","Marchand","Noble","R\u00f4deur"]
-jobs_fight = ["Archer", "Assassin", "Berzekr", "Guerrier"]
+jobs_dict = {
+        "Druide":"Érudit",
+        "Maître des bêtes":"Voyageur",
+        "Marchand":"Voyageur",
+        "Noble":"Voyageur",
+        "R\u00f4deur":"Voyageur",
+        "Berzekr":"Soldat",
+        "Archer":"Soldat",
+        "Assassin":"Soldat",
+        "Guerrier":"Soldat",
+    }
+jobs_other = [x for x in jobs_dict.keys() if jobs_dict[x] != "Soldat"]
+jobs_fight = [x for x in jobs_dict.keys() if jobs_dict[x] == "Soldat"]
+
 sauvegarde = {
         "Réflexe":"Voyageur",
         "Vigueur":"Soldat",
@@ -97,16 +109,24 @@ class Player:
             bonus_touch = self.skills[jet]
         elif jet in list(sauvegarde.keys()):
             bonus_touch = self.skills[sauvegarde[jet]]
-        elif jet in jobs_fight:
-            bonus_touch = self.skills["Soldat"]
-            if jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
+        elif jet in jobs:
+            bonus_touch = self.skills[jobs_dict[jet]]
+            if jet in ("Guerrier","Archer"):
+                bonus_dmg = self.skills[jet]
+            elif jet == "Berzekr": # Bonus de berzekr + bonus de guerrier
                 bonus_touch += self.skills["Berzekr"]
-                bonus_dmg = self.skills["Berzekr"]
-                bonus_dmg += self.skills["Guerrier"]
-            elif jet == "Guerrier":
-                bonus_dmg = self.skills[jet]
-            elif jet == "Archer":
-                bonus_dmg = self.skills[jet]
+                bonus_dmg = self.skills["Guerrier"]
+                bonus_dmg += self.skills["Berzekr"]
+            elif jet == "Noble": #Bonus de Noble + bonus de marchand
+                bonus_touch += self.skills["Marchand"]
+                bonus_touch += self.skills["Noble"]
+                bonus_dmg += self.skills["Noble"]
+                bonus_dmg += self.skills["Marchand"]
+            elif jet == "Marchand":
+                bonus_touch += self.skills["Marchand"]
+                bonus_dmg += self.skills["Marchand"]
+            else:
+                bonus_touch += self.skills[jet]
         elif jet == "Initiative":
             bonus_touch = self.skills["Soldat"]
         return bonus_touch, bonus_dmg
@@ -187,6 +207,8 @@ class Player:
                 msg = "**Jet de combat (%s) de %s**. (Le bonus de guerrier est pris en compte).\n" % (jet, self.name)
             elif jet == "Archer":
                 msg = "**Jet de combat (%s) de %s**.\n" %(jet, self.name) 
+            elif jet in jobs:
+                msg = "**Jet de métier (%s) de %s**. \n" %(jet, self.name)
             elif jet == "Initiative":
                 msg = "**Jet d'initiative de %s**\n" % (self.name)
             else:
