@@ -5,30 +5,30 @@ weeks = ["Basse", "Haute", "Fuyante"]
 months = ["placeholder"] * 3 + ["Molosse ailé", "Numismate","Frondeur", "Chat noir", "Faucheur", "Reine barbare", "Guide"] + ["placeholder"] * 5 * 2
 
 weather=[
-            ("Pluies fines", "Une légère pluie tombe sur la région", False, range(1,4)),
-        ("Giboulées", "Le temps est relativement calme mais quelques giboulées tombent de temps en temps", True, range(0)),
-        ("Averses locales", "Des averses tombent sur la région.", True, range(2)),
-        ("Nuages et vent", "Quelques nuages et du vent.", True, range(1,4)),
-        ("Eclaircies et vent", "Quelques nuages et un vent qui souffle du nord", True, range(1,4)),
-        ("Beau temps nuageux", "Une belle journée malgré quelques nuages", True, []),
-        ("Beau temps", "Une belle journée !", True, []),
-        ("Grand beau temps", "Une journée magnifique !", True, []),
-        ("Lourd et orageux", "Un temps de chien. Des torrents de pluie s'abattent sur la patrouille et le tonnerre gronde.", False, range(1,3)),
-        ("Caniculaire", "Une température caniculaire qui donne envie de rester à l'ombre", True, []),
-        ("Grand beau temps", "Une journée magnifique !", True, []),
-        ("Beau temps", "Une belle journée !", True, []),
-        ("Beau temps", "Une belle journée !", True, []),
-        ("Beau temps nuageux", "Une belle journée malgré quelques nuages", True, []),
-        ("Eclaircies", "Quelques nuages mais rien de grave", True, []),
-        ("Eclaircies et vent", "Un temps nuageux et un vent qui souffle du nord", True, range(1,4)),
-        ("Pluies et vent", "Une journée pleine de pluie et de vent...", False, [i + j for i in range(1,4) for j in range(1,4)]),
+            ("Pluies fines", "Une légère pluie tombe sur la région", False, range(1,4),"https://gph.is/2gYLREp"),
+        ("Giboulées", "Le temps est relativement calme mais quelques giboulées tombent de temps en temps", True, range(0),"https://gph.is/2gYLREp"),
+        ("Averses locales", "Des averses tombent sur la région.", True, range(2),"https://gph.is/2gYLREp"),
+        ("Nuages et vent", "Quelques nuages et du vent.", True, range(1,4),"https://gph.is/2CHmA9j"),
+        ("Eclaircies et vent", "Quelques nuages et un vent qui souffle du nord", True, range(1,4),"https://gph.is/2CHmA9j"),
+        ("Beau temps nuageux", "Une belle journée malgré quelques nuages", True, [],"https://gph.is/2CHmA9j"),
+        ("Beau temps", "Une belle journée !", True, [],"https://gph.is/1prsxYn"),
+        ("Grand beau temps", "Une journée magnifique !", True, [],"https://gph.is/1prsxYn"),
+        ("Lourd et orageux", "Un temps de chien. Des torrents de pluie s'abattent sur la patrouille et le tonnerre gronde.", False, range(1,3),"https://gph.is/2gtl6WV"),
+        ("Caniculaire", "Une température caniculaire qui donne envie de rester à l'ombre", True, [],"https://gph.is/1prsxYn"),
+        ("Grand beau temps", "Une journée magnifique !", True, [],"https://gph.is/1prsxYn"),
+        ("Beau temps", "Une belle journée !", True, [],"https://gph.is/1prsxYn"),
+        ("Beau temps", "Une belle journée !", True, [],"https://gph.is/1prsxYn"),
+        ("Beau temps nuageux", "Une belle journée malgré quelques nuages", True, [],"https://gph.is/2CHmA9j"),
+        ("Eclaircies", "Quelques nuages mais rien de grave", True, [],"https://gph.is/2CHmA9j"),
+        ("Eclaircies et vent", "Un temps nuageux et un vent qui souffle du nord", True, range(1,4),"https://gph.is/2CHmA9j"),
+        ("Pluies et vent", "Une journée pleine de pluie et de vent...", False, [i + j for i in range(1,4) for j in range(1,4)],"https://gph.is/2gYLREp"),
         ("Vents violents", "Un vent très fort souffle sur la région", True, range(2,4)),
-        ("Pluies froides", "Il ne cesse de pleuvoir, attention à ne pas attraper la crève", False, range(1,4)),
-        ("Gelées", "Un froid glacial s'est abattu sur la région", True, []),
-        ("Froid intense, ciel dégagé", "Un froid intense s'est abattu sur la région. Heureusement le soleil pointe le bout de son nez", True, []),
-        ("Neige", "La neige tombe sur la région", False, range(2,6)),
-        ("Gelées verglaçantes", "Un froid terrible s'est abattu sur la région. Les lacs et rivières sont gelés.", True, []),
-        ("Pluies froides", "Un torrent de pluie glacé nous tombe dessus", True, range(1,4))
+        ("Pluies froides", "Il ne cesse de pleuvoir, attention à ne pas attraper la crève", False, range(1,4),"https://gph.is/2gYLREp"),
+        ("Gelées", "Un froid glacial s'est abattu sur la région", True, [],"https://gph.is/2CJ9E3A"),
+        ("Froid intense, ciel dégagé", "Un froid intense s'est abattu sur la région. Heureusement le soleil pointe le bout de son nez", True, [],"https://gph.is/2CJ9E3A"),
+        ("Neige", "La neige tombe sur la région", False, range(2,6),"https://gph.is/Vx9tNX"),
+        ("Gelées verglaçantes", "Un froid terrible s'est abattu sur la région. Les lacs et rivières sont gelés.", True, [],"https://gph.is/2CJ9E3A"),
+        ("Pluies froides", "Un torrent de pluie glacé nous tombe dessus", True, range(1,4),"https://gph.is/2gYLREp")
         ]
 
 special_weather = [
@@ -36,7 +36,7 @@ special_weather = [
         ("Bourrasques (vent)", "Le temps est venteux et de violentes bourrasques soufflent parfois sur la région.", True, 1),
         ("Brumes (Mod +1)", "Le temps est brumeux mais il reste possible de s'orienter. (Malus sur le déplacement)", False, 1),
         (u"Grèle (Mod +1)", "Une journée où la grèle tombe.", True, 1),
-        ("Orage (Mod +2)", "Orage et pluie ! Que du bonheur.", False, 2),
+        ("Orage (Mod +2)", "Orage et pluie ! Que du bonheur.", False, 2,"https://gph.is/1PBO1yL"),
         ("Brouillards épais (Mod +2)", "Un brouillard très épais est tombé sur la région. Attention à ne pas vous perdre (Malus sur le déplacement, risque de se retrouver sur le mauvais hexagone)", False, 2),
         (u"Rafales très violentes (Mod +3)", "Des rafales de vent violentes soufflent sur la région", True, 3), 
         (u"Poussières corrompues (vigueur contre poison) (Mod +4)", "Depuis la grande guerre contre le roi sorcier des vents empoisonnés soufflent de temps en temps sur l'empire. Les gens s'enferment chez eux dans ces cas et prient pour que le bétail et les récoltes ne succombent pas tous. (Jet de vigueur contre poison si vous sortez).", True, 4)
@@ -94,6 +94,8 @@ def get_date(date):
             # Supprimer l'event
             pass 
     msg += get_hunger(date)
+    msg += '\n'
+    msg += weather[date["weather"]][-1]
     return msg
 
 def get_hunger(date):
