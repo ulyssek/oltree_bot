@@ -25,8 +25,9 @@ weapons = dict(weapons_close)
 weapons.update(weapons_distance)
 
 vocations = ["Soldat","Voyageur","Érudit"]
-jobs_other = ["Druide","Maître des bêtes"]
+jobs_other = ["Druide","Maître des bêtes","Marchand","Noble","R\u00f4deur"]
 jobs_fight = ["Archer", "Assassin", "Berzekr", "Guerrier"]
+sauvegarde = ["Réflexe","Vigueur","Volonté"]
 jobs = jobs_other + jobs_fight
 
 weapons = ["Arme","Arme bonus"]
@@ -213,8 +214,18 @@ class Player:
             msg += "\n*Status*: %s" % _
         msg += "\n**Vocations**\n"
         msg += " ".join(["%s : %s" % ("*"+vocation+"*",self.skills[vocation]) for vocation in vocations])
-        msg += "\n**Métiers**\n"
-        msg += " ".join(["%s : %s" % ("*"+job+"*",self.skills[job]) for job in jobs if str(self.skills[job])!='0'])
+        msg += "\n**Métiers civils**\n"
+        temp = ["%s : %s" % ("*"+job+"*",self.skills[job]) for job in jobs_other if str(self.skills[job])!='0']
+        if temp == []:
+            msg += "Nada"
+        else:
+            msg += " ".join(temp)
+        msg += "\n**Métiers bagarre**\n"
+        temp = ["%s : %s" % ("*"+job+"*",self.skills[job]) for job in jobs_fight if str(self.skills[job])!='0']
+        if temp == []:
+            msg += "Nada"
+        else:
+            msg += " ".join(temp)
         msg += "\n**Armes**\n"
         temp = ["%s : %s" % ("*"+weapon+"*",self.skills[weapon]) for weapon in weapons if str(self.skills[weapon])!='0']
         if temp == []:
