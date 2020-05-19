@@ -24,6 +24,17 @@ prouesse= [
 weapons = dict(weapons_close)
 weapons.update(weapons_distance)
 
+weapons_dict = {
+        "1h_sword": "Epée",
+        "2h_sword": "Epée à deux mains (+2 dégâts)",
+        "1h_axe": "Hache (-1 à l'attaque contre combattants armés, +2 dégâts contre monstres",
+        "2h_axe": "Hache à deux mains (-1 à l'attaque contre combattants armés, +4 dégâts contre monstres, +2 dégâts contre les autres)",
+        "longbow": "Arc long",
+        "shortbow": "Arc court",
+        "spear": "Lance deux mains (+1 CA contre adversaires sans boucliers, +2 dégâts contre des grandes créatures ou cavaliers)",
+        "dagger": "Dague (-2 CA contre adversaires avec arme plus longue, pas de malus en milieu confiné)",
+        }
+
 vocations = ["Soldat","Voyageur","Érudit"]
 jobs_other = ["Druide","Maître des bêtes","Marchand","Noble","R\u00f4deur"]
 jobs_fight = ["Archer", "Assassin", "Berzekr", "Guerrier"]
