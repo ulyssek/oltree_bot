@@ -122,11 +122,9 @@ class Player:
                 bonus_touch += self.skills["Noble"]
                 bonus_dmg += self.skills["Noble"]
                 bonus_dmg += self.skills["Marchand"]
-            elif jet == "Marchand":
-                bonus_touch += self.skills["Marchand"]
-                bonus_dmg += self.skills["Marchand"]
             else:
                 bonus_touch += self.skills[jet]
+                bonus_dmg += self.skills[jet]
         elif jet == "Initiative":
             bonus_touch = self.skills["Soldat"]
         return bonus_touch, bonus_dmg
