@@ -226,12 +226,9 @@ async def cmd_play(message):
         await message.channel.send("Me faut un numéro de la carte mon goret")
         return
     cards = client.stored_values["cards"][player]
-    discard = client.stored_values["cards"]["discard"]
     try:
         card_index = cards.index(card_number)
         cards.pop(card_index)
-        discard.append(card_number)
-        print(discard)
     except ValueError:
         await message.channel.send("T'as pas la carte mon chou")
         return
@@ -536,7 +533,7 @@ commands = {
     ';ellipse' : cmd_ellipse,
     ';reset_meteo' : cmd_reset_meteo,
     ';legend' : cmd_legend,
-    ';rules' : cmd_rules,
+    #';rules' : cmd_rules,
 }
 
 
